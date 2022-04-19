@@ -1,0 +1,116 @@
+# Indicates how many days before the current one will be checked during a crawling process.
+# For instance, if today is 12-04-2022 and this parameter is equal to 2, the crawler
+# will try to get currency rates at 12-04-2022, 11-04-2022, and 10-04-2022.
+#
+number_of_days_to_check: 2
+
+# Indicates how many days the crawler must add to a date of a rate it gets. For instance,
+# if this parameter is equal to 1 and  UAE Central Bank says that rate of a currency is
+# 3.65 at 12-04-2022, the crawler writes this date to MongoDB as 13-04-2022.
+#
+number_of_days_to_add: 1
+
+# Indicates currencies to work with. Is it has no items, it means that
+# it includes all possible currencies which scripts are able to find.
+#
+# Example:
+# - USD
+# - EUR
+#
+currency_codes_filter:
+  - USD
+  - EUR
+
+# Connection parameters for MongoDB.
+#
+mongodb_connection_string:  "mongodb://localhost:27017"
+mongodb_database_name:      "uae_currency_rates"
+mongodb_max_delay:          5
+
+# Integration parameters for Telegram.
+#
+telegram_bot_token: ""
+telegram_chat_id:   0
+
+# Country Currency Codes. Scripts use this list to convert a presentation of a currency
+# to its code, accordingly to ISO 4217 (https://en.wikipedia.org/wiki/ISO_4217).
+#
+currency_codes:
+
+  "New Zealand Dollar":       NZD
+  "US Dollar":                USD
+  "Argentine Peso":           ARS
+  "Australian Dollar":        AUD
+  "Bangladesh Taka":          BDT
+  "Bahrani Dinar":            BHD
+  "Brunei Dollar":            BND
+  "Brazilian Real":           BRL
+  "Botswana Pula":            BWP
+  "Belarus Rouble":           BYN
+  "Canadian Dollar":          CAD
+  "Swiss Franc":              CHF
+  "Chilean Peso":             CLP
+  "Chinese Yuan - Offshore":  CNY
+  "Chinese Yuan":             CNY
+  "Colombian Peso":           COP
+  "Czech Koruna":             CZK
+  "Danish Krone":             DKK
+  "Algerian Dinar":           DZD
+  "Egypt Pound":              EGP
+  "Euro":                     EUR
+  "GB Pound":                 GBP
+  "Hongkong Dollar":          HKD
+  "Hungarian Forint":         HUF
+  "Indonesia Rupiah":         IDR
+  "Indian Rupee":             INR
+  "Iceland Krona":            ISK
+  "Jordan Dinar":             JOD
+  "Japanese Yen":             JPY
+  "Kenya Shilling":           KES
+  "Korean Won":               KRW
+  "Kuwaiti Dinar":            KWD
+  "Kazakhstan Tenge":         KZT
+  "Lebanon Pound":            LBP
+  "Sri Lanka Rupee":          LKR
+  "Moroccan Dirham":          MAD
+  "Macedonia Denar":          MKD
+  "Mexican Peso":             MXN
+  "Malaysia Ringgit":         MYR
+  "Nigerian Naira":           NGN
+  "Norwegian Krone":          NOK
+  "NewZealand Dollar":        NZD
+  "Omani Rial":               OMR
+  "Peru Sol":                 PEN
+  "Philippine Piso":          PHP
+  "Pakistan Rupee":           PKR
+  "Polish Zloty":             PLN
+  "Qatari Riyal":             QAR
+  "Serbian Dinar":            RSD
+  "Russia Rouble":            RUB
+  "Saudi Riyal":              SAR
+  "Swedish Krona":            SWK
+  "Singapore Dollar":         SGD
+  "Thai Baht":                THB
+  "Tunisian Dinar":           TND
+  "Turkish Lira":             TRY
+  "Trin Tob Dollar":          TTD
+  "Taiwan Dollar":            TWD
+  "Tanzania Shilling":        TZS
+  "Uganda Shilling":          UGX
+  "Vietnam Dong":             VND
+  "South Africa Rand":        ZAR
+  "Zambian Kwacha":           ZMW
+  "Sudanese Pound":           SDG
+  "Yemen Rial":               YER
+  "Azerbaijan manat":         AZN
+  "Bulgarian lev":            BGN
+  "Croatian kuna":            HRK
+  "Ethiopian birr":           ETB
+  "Iraqi dinar":              IQD
+  "Israeli new shekel":       ILS
+  "Libyan dinar":             LYD
+  "Mauritian rupee":          MUR
+  "Romanian leu":             RON
+  "Syrian pound":             SYP
+  "Turkmen manat":            TMT
+  "Uzbekistani som":          UZS
