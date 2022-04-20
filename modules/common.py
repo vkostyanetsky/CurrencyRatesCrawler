@@ -19,11 +19,6 @@ def get_date_as_string(date: datetime.datetime) -> str:
     return date.strftime('%Y-%m-%d')
 
 
-def get_currency_rates_version() -> int:
-
-    return int(time.time())
-
-
 def get_current_date() -> datetime.datetime:
 
     today = datetime.date.today()
