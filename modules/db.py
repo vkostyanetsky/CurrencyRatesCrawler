@@ -1,4 +1,4 @@
-import modules.common as common
+import datetime
 
 from pymongo import MongoClient
 from pymongo import collection as collection
@@ -8,7 +8,8 @@ class CrawlerDB:
 
     DB: object = None
     RATES: collection = None
-    DATE_FORMAT_STRING: str = ''
+    DATE_FORMAT_STRING: str = "%Y%m%d"
+    DATETIME_FORMAT_STRING: str = "%Y%m%d%H%M%S"
 
     def __init__(self, config: dict):
 
@@ -17,10 +18,8 @@ class CrawlerDB:
         CrawlerDB.DB = client[config['mongodb_database_name']]
         CrawlerDB.RATES = CrawlerDB.DB['currency_rates']
 
-        CrawlerDB.DATE_FORMAT_STRING = common.get_date_format_string()
-
     @classmethod
-    def get_currency_rates(cls, currency_code: str, version: int = 0):
+    def get_currency_rates(cls, currency_code: str, date: datetime.datetime = None):
 
         def get_stage_1():
 
@@ -31,8 +30,8 @@ class CrawlerDB:
                     }
             }
 
-            if version > 0:
-                stage['$match']['version'] = {'$gt': version}
+            if date is not None:
+                stage['$match']['written_at'] = {'$gt': date}
 
             return stage
 
@@ -42,11 +41,11 @@ class CrawlerDB:
                 '$group':
                     {
                         '_id': '$valid_from',
-                        'version':
+                        'written_at':
                             {
                                 '$max':
                                     {
-                                        'version':          '$version',
+                                        'written_at':       '$written_at',
                                         'currency_rate':    '$currency_rate'
                                     }
                             },
@@ -74,9 +73,9 @@ class CrawlerDB:
         for rate in cursor:
 
             rates.append({
-                'version':          rate['version']['version'],
+                'written_at':       rate['written_at']['written_at'].strftime(CrawlerDB.DATETIME_FORMAT_STRING),
                 'valid_from':       rate['_id'].strftime(CrawlerDB.DATE_FORMAT_STRING),
-                'currency_rate':    rate['version']['currency_rate']
+                'currency_rate':    rate['written_at']['currency_rate']
             })
 
         return rates

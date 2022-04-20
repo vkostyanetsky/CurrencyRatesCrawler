@@ -1,3 +1,6 @@
+from icecream import ic
+
+import datetime
 import os
 
 from flask import Flask
@@ -6,6 +9,12 @@ from flask_restful import Resource
 
 import modules.common as common
 import modules.db as db
+
+
+def get_error_response_using_exception(exception):
+
+    error_message = f"{exception=}"
+    return get_error_response(error_message)
 
 
 def get_error_response(message):
@@ -17,18 +26,18 @@ def get_error_response(message):
 
 def get_rates_response(rates):
 
-    def get_max_version():
+    def get_max_written_at():
 
         versions = []
 
         for rate in rates:
-            versions.append(rate['version'])
+            versions.append(rate['written_at'])
 
         return max(versions) if len(versions) > 0 else 0
 
     data = {
-        'rates':        rates,
-        'max_version':  get_max_version()
+        'rates':           rates,
+        'max_written_at':  get_max_written_at()
     }
 
     return data, 200
@@ -47,6 +56,16 @@ class Hello(Resource):
 class Rates(Resource):
 
     @staticmethod
+    def get():
+
+        message = 'No currency specified.'
+
+        return get_error_response(message)
+
+
+class RatesWithCurrencyCode(Resource):
+
+    @staticmethod
     def get(currency_code: str):
 
         rates = DB.get_currency_rates(currency_code)
@@ -54,12 +73,33 @@ class Rates(Resource):
         return get_rates_response(rates)
 
 
-class RatesAfterVersion(Resource):
+class RatesWithCurrencyCodeAndDate(Resource):
 
     @staticmethod
-    def get(currency_code: str, version: int):
+    def get(currency_code: str, date: str):
 
-        rates = DB.get_currency_rates(currency_code, version)
+        def get_date():
+
+            year = int(date[:4])
+            month = int(date[4:6])
+            day = int(date[6:8])
+
+            hour = int(date[8:10])
+            minute = int(date[10:12])
+            second = int(date[12:])
+
+            return datetime.datetime(year, month, day, hour, minute, second)
+
+        try:
+
+            date = get_date()
+
+        except ValueError:
+
+            error_message = "Unable to parse a date."
+            return get_error_response(error_message)
+
+        rates = DB.get_currency_rates(currency_code, date)
 
         return get_rates_response(rates)
 
@@ -74,14 +114,17 @@ api.add_resource(
 
 api.add_resource(
     Rates,
-    "/rates/",
-    "/rates/<currency_code>/"
+    "/rates/", "/rates/"
 )
 
 api.add_resource(
-    RatesAfterVersion,
-    "/rates/<currency_code>/",
-    "/rates/<currency_code>/<int:version>/"
+    RatesWithCurrencyCode,
+    "/rates/", "/rates/<currency_code>/"
+)
+
+api.add_resource(
+    RatesWithCurrencyCodeAndDate,
+    "/rates/<currency_code>/", "/rates/<currency_code>/<date>/"
 )
 
 CURRENT_DIRECTORY = os.path.abspath(os.path.dirname(__file__))
@@ -89,4 +132,4 @@ CONFIG = common.get_config(CURRENT_DIRECTORY)
 DB = db.CrawlerDB(CONFIG)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
