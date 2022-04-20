@@ -44,14 +44,7 @@ def get_data_from_bank(request_date) -> tuple:
 
     def get_currency_rates_from_response() -> list:
 
-        def get_valid_from_parameter() -> datetime.datetime:
-
-            update_date_converted = datetime.datetime(update_date.year, update_date.month, update_date.day)
-            date_delta = datetime.timedelta(days=CONFIG['number_of_days_to_add'])
-
-            return update_date_converted + date_delta
-
-        valid_from = get_valid_from_parameter()
+        rate_date = common.get_rate_date(update_date)
 
         table = BeautifulSoup(response_json['table'], features='html.parser')
         rates = []
@@ -74,7 +67,7 @@ def get_data_from_bank(request_date) -> tuple:
             rates.append({
                 'currency_code':    currency_code,
                 'import_date':      CURRENT_DATETIME,
-                'rate_date':        valid_from,
+                'rate_date':        rate_date,
                 'rate':             float(currency_rate_tag.text),
             })
 

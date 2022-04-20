@@ -9,7 +9,14 @@ from requests import Response
 from requests.structures import CaseInsensitiveDict
 
 
-def get_date_format_string():
+def get_rate_date(update_date, config) -> datetime.datetime:
+
+    date_delta = datetime.timedelta(days=config['number_of_days_to_add'])
+
+    return datetime.datetime(update_date.year, update_date.month, update_date.day) + date_delta
+
+
+def get_date_format_string() -> str:
 
     return '%#d-%#m-%Y' if platform.system() == 'Windows' else '%-d-%-m-%Y'
 

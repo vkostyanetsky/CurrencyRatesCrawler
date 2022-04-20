@@ -66,10 +66,13 @@ def load_currency_rates_from_file(link):
         if not common.is_currency_code_allowed(currency_code, CONFIG):
             continue
 
+        rate_date = common.get_datetime_from_date(date_column[index])
+        rate_date = common.get_rate_date(rate_date)
+
         rates.append({
             'currency_code':    currency_code,
             'import_date':      CURRENT_DATETIME,
-            'rate_date':        common.get_datetime_from_date(date_column[index]),
+            'rate_date':        rate_date,
             'rate':             float(rate_column[index]),
         })
 
