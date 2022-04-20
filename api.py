@@ -38,7 +38,7 @@ def get_rates_response(rates):
             'rate_date':    rate['rate_date'].strftime(date_format_string),
         })
 
-    max_import_date = max(import_dates) if len(import_dates) > 0 else 0
+    max_import_date = max(import_dates) if len(import_dates) > 0 else datetime.datetime(1, 1, 1)
     max_import_date = max_import_date.strftime(datetime_format_string)
 
     data = {
