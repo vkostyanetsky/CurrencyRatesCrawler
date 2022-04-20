@@ -29,7 +29,13 @@ class CrawlerDB:
             }
 
             if import_date is not None:
-                stage['$match']['import_date'] = {'$gt': import_date}
+
+                """I know about $gt, but for some reason it works as $gte on my MongoDB instance.
+                
+                So I use $gte and add 1 seconds, just to make it looks a bit more logical.
+                """
+
+                stage['$match']['import_date'] = {'$gte': import_date + datetime.timedelta(seconds=1)}
 
             return stage
 
