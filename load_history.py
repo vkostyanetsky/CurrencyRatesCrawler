@@ -67,11 +67,10 @@ def load_currency_rates_from_file(link):
             continue
 
         rates.append({
-            'currency_code': currency_code,
-            'currency_rate': float(rate_column[index]),
-            'valid_from':    common.get_datetime_from_date(date_column[index]),
-            'written_at':    CURRENT_DATE,
-            'version':       CURRENCY_RATES_VERSION,
+            'currency_code':    currency_code,
+            'import_date':      CURRENT_DATETIME,
+            'rate_date':        common.get_datetime_from_date(date_column[index]),
+            'rate':             float(rate_column[index]),
         })
 
     DB.add_currency_rates(rates)
@@ -79,11 +78,10 @@ def load_currency_rates_from_file(link):
 
 # Initialization
 
-CURRENCY_RATES_VERSION = common.get_currency_rates_version()
-
 CURRENT_DIRECTORY = os.path.abspath(os.path.dirname(__file__))
 CONFIG = common.get_config(CURRENT_DIRECTORY)
 
+CURRENT_DATETIME = common.get_current_datetime()
 CURRENT_DATE = common.get_current_date()
 
 DB = db.CrawlerDB(CONFIG)

@@ -25,6 +25,11 @@ def get_current_date() -> datetime.datetime:
     return get_datetime_from_date(today)
 
 
+def get_current_datetime() -> datetime.datetime:
+
+    return datetime.datetime.now()
+
+
 def get_currency_code(currency_presentation: str, config) -> str:
 
     result = config['currency_codes'].get(currency_presentation)

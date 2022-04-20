@@ -72,11 +72,10 @@ def get_data_from_bank(request_date) -> tuple:
             currency_rate_tag = tags[index + 1]
 
             rates.append({
-                'currency_code': currency_code,
-                'currency_rate': float(currency_rate_tag.text),
-                'valid_from':    valid_from,
-                'written_at':    CURRENT_DATE,
-                'version':       CURRENCY_RATES_VERSION,
+                'currency_code':    currency_code,
+                'import_date':      CURRENT_DATETIME,
+                'rate_date':        valid_from,
+                'rate':             float(currency_rate_tag.text),
             })
 
         return rates
@@ -93,10 +92,10 @@ def get_data_from_bank(request_date) -> tuple:
 
 # Initialization
 
-CURRENCY_RATES_VERSION = common.get_currency_rates_version()
-
 CURRENT_DIRECTORY = os.path.abspath(os.path.dirname(__file__))
 CONFIG = common.get_config(CURRENT_DIRECTORY)
+
+CURRENT_DATETIME = common.get_current_datetime()
 
 CURRENT_DATE = common.get_current_date()
 MINIMAL_DATE = CURRENT_DATE - datetime.timedelta(days=CONFIG['number_of_days_to_check'])

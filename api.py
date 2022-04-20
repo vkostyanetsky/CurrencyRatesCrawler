@@ -1,5 +1,3 @@
-from icecream import ic
-
 import datetime
 import os
 
@@ -26,18 +24,26 @@ def get_error_response(message):
 
 def get_rates_response(rates):
 
-    def get_max_written_at():
+    datetime_format_string = "%Y%m%d%H%M%S"
+    date_format_string = "%Y%m%d"
 
-        versions = []
+    import_dates = []
 
-        for rate in rates:
-            versions.append(rate['written_at'])
+    for rate in rates:
 
-        return max(versions) if len(versions) > 0 else 0
+        import_dates.append(rate['import_date'])
+
+        rate.update({
+            'import_date':  rate['import_date'].strftime(datetime_format_string),
+            'rate_date':    rate['rate_date'].strftime(date_format_string),
+        })
+
+    max_import_date = max(import_dates) if len(import_dates) > 0 else 0
+    max_import_date = max_import_date.strftime(datetime_format_string)
 
     data = {
-        'rates':           rates,
-        'max_written_at':  get_max_written_at()
+        'rates':            rates,
+        'max_import_date':  max_import_date
     }
 
     return data, 200
