@@ -44,7 +44,7 @@ def get_data_from_bank(request_date) -> tuple:
 
     def get_currency_rates_from_response() -> list:
 
-        rate_date = common.get_rate_date(update_date)
+        rate_date = common.get_rate_date(update_date, CONFIG)
 
         table = BeautifulSoup(response_json['table'], features='html.parser')
         rates = []
