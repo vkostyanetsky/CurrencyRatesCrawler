@@ -138,4 +138,4 @@ CONFIG = common.get_config(CURRENT_DIRECTORY)
 DB = db.CrawlerDB(CONFIG)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
