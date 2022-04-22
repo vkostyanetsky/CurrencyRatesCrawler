@@ -5,8 +5,9 @@ from flask import Flask
 from flask_restful import Api
 from flask_restful import Resource
 
-import modules.common as common
-import modules.db as db
+import modules.common as common_module
+import modules.logger as logger_module
+import modules.db as db_module
 
 
 def get_error_response_using_exception(exception):
@@ -74,7 +75,7 @@ class RatesWithCurrencyCode(Resource):
     @staticmethod
     def get(currency_code: str):
 
-        rates = DB.get_currency_rates(currency_code)
+        rates = db.get_currency_rates(currency_code)
 
         return get_rates_response(rates)
 
@@ -105,7 +106,7 @@ class RatesWithCurrencyCodeAndDate(Resource):
             error_message = "Unable to parse a date."
             return get_error_response(error_message)
 
-        rates = DB.get_currency_rates(currency_code, date)
+        rates = db.get_currency_rates(currency_code, date)
 
         return get_rates_response(rates)
 
@@ -133,9 +134,11 @@ api.add_resource(
     "/rates/<currency_code>/", "/rates/<currency_code>/<date>/"
 )
 
-CURRENT_DIRECTORY = os.path.abspath(os.path.dirname(__file__))
-CONFIG = common.get_config(CURRENT_DIRECTORY)
-DB = db.CrawlerDB(CONFIG)
+current_directory = os.path.abspath(os.path.dirname(__file__))
+config = common_module.get_config(current_directory)
+logger = logger_module.get_logger(os.path.basename(__file__), config, current_directory)
+
+db = db_module.CrawlerDB(config)
 
 if __name__ == '__main__':
     app.run()

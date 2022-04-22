@@ -1,23 +1,30 @@
+import pymongo.mongo_client
+import pymongo.database
 import datetime
-
-from pymongo import MongoClient
-from pymongo import collection as collection
 
 
 class CrawlerDB:
 
-    DB: object = None
-    RATES: collection = None
+    __CLIENT: pymongo.MongoClient = None
+    __DATABASE: pymongo.database.Database = None
+    __RATES_COLLECTION: pymongo.collection = None
 
     def __init__(self, config: dict):
 
-        client = MongoClient(config['mongodb_connection_string'], serverSelectionTimeoutMS=config['mongodb_max_delay'])
+        self.__CLIENT = pymongo.MongoClient(
+            config['mongodb_connection_string'],
+            serverSelectionTimeoutMS=config['mongodb_max_delay']
+        )
 
-        CrawlerDB.DB = client[config['mongodb_database_name']]
-        CrawlerDB.RATES = CrawlerDB.DB['currency_rates']
+        self.__DATABASE = self.__CLIENT[config['mongodb_database_name']]
 
-    @classmethod
-    def get_currency_rates(cls, currency_code: str, import_date: datetime.datetime = None):
+        self.__RATES_COLLECTION = self.__DATABASE['currency_rates']
+
+    def disconnect(self):
+
+        self.__CLIENT.close()
+
+    def get_currency_rates(self, currency_code: str, import_date: datetime.datetime = None):
 
         def get_stage_1():
 
@@ -70,9 +77,10 @@ class CrawlerDB:
         stage_3 = get_stage_3()
 
         stages = [stage_1, stage_2, stage_3]
-        cursor = cls.RATES.aggregate(stages)
 
         rates = []
+
+        cursor = self.__RATES_COLLECTION.aggregate(stages)
 
         for rate in cursor:
 
@@ -84,12 +92,11 @@ class CrawlerDB:
 
         return rates
 
-    @classmethod
-    def add_currency_rates(cls, rates):
-        cls.RATES.insert_many(rates)
+    def add_currency_rates(self, rates):
 
-    @classmethod
-    def check_for_ambiguous_currency_rate(cls, rate):
+        self.__RATES_COLLECTION.insert_many(rates)
+
+    def check_for_ambiguous_currency_rate(self, rate):
 
         query = {
             '$and': [
@@ -98,7 +105,6 @@ class CrawlerDB:
                 {'rate':            {'$ne': rate['rate']}},
             ]}
 
-        if cls.RATES.count_documents(query) > 0:
+        if self.__RATES_COLLECTION.count_documents(query) > 0:
             # TODO Telegram alert required
             print('?')
-
