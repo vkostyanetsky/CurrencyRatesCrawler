@@ -24,7 +24,24 @@ class CrawlerDB:
 
         self.__CLIENT.close()
 
-    def get_currency_rates(self, currency_code: str, import_date: datetime.datetime = None):
+    def get_currencies(self):
+
+        cursor = self.__RATES_COLLECTION.aggregate([{
+            '$group': {'_id': '$currency_code'}
+        }])
+
+        currencies = []
+
+        for record in cursor:
+            currencies.append(record['_id'])
+
+        return currencies
+
+    def get_currency_rates(
+            self,
+            currency_code: str,
+            import_date: datetime.datetime = None,
+            rate_date: datetime.datetime = None):
 
         def get_stage_1():
 
@@ -34,6 +51,10 @@ class CrawlerDB:
                         'currency_code': {'$eq': currency_code.upper()}
                     }
             }
+
+            if rate_date is not None:
+
+                stage['$match']['rate_date'] = {'$eq': rate_date}
 
             if import_date is not None:
 
@@ -92,19 +113,24 @@ class CrawlerDB:
 
         return rates
 
-    def add_currency_rates(self, rates):
+    def is_currency_rate_to_change(self, rate: dict) -> bool:
 
-        self.__RATES_COLLECTION.insert_many(rates)
+        current_rates = self.get_currency_rates(rate['currency_code'], rate_date=rate['rate_date'])
+        rate_for_date = current_rates[0]['rate'] if len(current_rates) > 0 else 0
 
-    def check_for_ambiguous_currency_rate(self, rate):
+        return rate_for_date != rate['rate']
+
+    def is_currency_rate_to_add(self, rate: dict) -> bool:
 
         query = {
             '$and': [
                 {'currency_code':   {'$eq': rate['currency_code']}},
                 {'rate_date':       {'$eq': rate['rate_date']}},
-                {'rate':            {'$ne': rate['rate']}},
+                {'rate':            {'$eq': rate['rate']}}
             ]}
 
-        if self.__RATES_COLLECTION.count_documents(query) > 0:
-            # TODO Telegram alert required
-            print('?')
+        return self.__RATES_COLLECTION.count_documents(query) == 0
+
+    def add_currency_rate(self, rate):
+
+        self.__RATES_COLLECTION.insert_one(rate)

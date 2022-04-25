@@ -8,142 +8,164 @@ in the same directory.
 
 """
 
-import os
 import time
 import datetime
 import platform
+import modules.crawler
 
 from bs4 import BeautifulSoup
 
-import modules.common as common_module
-import modules.logger as logger_module
-import modules.rates as rates_module
-import modules.db as db_module
 
+class CurrentRatesCrawler(modules.crawler.Crawler):
 
-def get_data_from_bank(request_date) -> tuple:
+    __REQUEST_DATE_FORMAT_STRING = "%#d-%#m-%Y" if platform.system() == "Windows" else "%-d-%-m-%Y"
 
-    def get_response_json() -> dict:
+    def __init__(self, file):
 
-        def get_request_url() -> str:
+        super().__init__(file)
 
-            request_date_string = request_date.strftime(request_date_format_string)
+    def run(self):
 
-            return "https://www.centralbank.ae/en/fx-rates-ajax?date={}&v=5".format(request_date_string)
+        changed_currency_rates = []
+        historical_currency_rates = []
 
-        request_url = get_request_url()
-        response = common_module.get_response_for_request(request_url)
-
-        return response.json()
-
-    def get_update_date_from_response() -> datetime.date:
-
-        string = response_json["last_updated"].split(" ")
-        string = "{} {} {}".format(string[0], string[1], string[2])
-
-        return datetime.datetime.strptime(string, "%d %b %Y")
-
-    def get_currency_rates_from_response() -> list:
-
-        rate_date = rates_module.get_rate_date(update_date_from_response, config)
-
-        table = BeautifulSoup(response_json["table"], features="html.parser")
-        rates = []
-
-        tags = table.find_all('td')
-
-        for index in range(0, len(tags), 2):
-
-            currency_name_tag = tags[index]
-            currency_code = rates_module.get_currency_code(currency_name_tag.text, config)
-
-            if currency_code is None:
-                continue
-
-            if not rates_module.is_currency_code_allowed(currency_code, config):
-                continue
-
-            currency_rate_tag = tags[index + 1]
-
-            rates.append({
-                'currency_code':    currency_code,
-                'import_date':      current_datetime,
-                'rate_date':        rate_date,
-                'rate':             float(currency_rate_tag.text),
-            })
-
-        return rates
-
-    response_json = get_response_json()
-
-    time.sleep(1)
-
-    update_date_from_response = get_update_date_from_response()
-    currency_rates_from_response = get_currency_rates_from_response()
-
-    return update_date_from_response, currency_rates_from_response
-
-
-# Initialization
-
-current_directory = os.path.abspath(os.path.dirname(__file__))
-current_datetime = common_module.get_current_datetime()
-current_date = common_module.get_beginning_of_today()
-
-config = common_module.get_config(current_directory)
-logger = logger_module.get_logger(os.path.basename(__file__), config, current_directory)
-
-request_date_format_string = "%#d-%#m-%Y" if platform.system() == "Windows" else "%-d-%-m-%Y"
-minimal_date = current_date - datetime.timedelta(days=config['number_of_days_to_check'])
-
-db = db_module.CrawlerDB(config)
-
-# Let's get it started!
-
-crawl_date = current_date
-
-while crawl_date >= minimal_date:
-
-    logger.debug(
-        "Crawling date: {}...".format(common_module.get_date_as_string(crawl_date))
-    )
-
-    update_date, currency_rates = get_data_from_bank(crawl_date)
-
-    if update_date == crawl_date:
-
-        logger.debug("Update date is equal.")
-
-        db.add_currency_rates(currency_rates)
-
-        for rate in currency_rates:
-            db.check_for_ambiguous_currency_rate(rate)
-
-        crawl_date -= datetime.timedelta(days=1)
-
-    else:
-
-        logger.debug(
-            "Update date is different ({}).".format(common_module.get_date_as_string(update_date))
+        minimal_date = self._CURRENT_DATE - datetime.timedelta(
+            days=self._CONFIG['number_of_days_to_check']
         )
-        logger.debug("There are no rates for the crawl date.")
 
-        if minimal_date <= update_date:
+        crawl_date = self._CURRENT_DATE
 
-            logger.debug("Switching to the update date...")
+        while crawl_date >= minimal_date:
 
-            crawl_date = update_date
-
-        else:
-
-            logger.debug(
-                "Unable to switch to the update date since it is less than {} (the minimal one).".format(minimal_date)
+            self._LOGGER.debug(
+                "Crawling date: {}...".format(self.get_date_as_string(crawl_date))
             )
 
-            break
+            update_date, currency_rates, unknown_currencies = self.get_data_from_bank(crawl_date)
 
-db.disconnect()
+            self.unknown_currencies_warning(unknown_currencies)
 
-logger.info(
-    "Crawling for {} is done.".format(common_module.get_date_as_string(current_date))
-)
+            if update_date == crawl_date:
+
+                self._LOGGER.debug("Update date is equal.")
+
+                for currency_rate in currency_rates:
+
+                    if not self._DB.is_currency_rate_to_add(currency_rate):
+                        continue
+
+                    if currency_rate['rate_date'] < self._CURRENT_DATE:
+                        historical_currency_rates.append({
+                            'currency_code': currency_rate['currency_code'],
+                            'rate_date': currency_rate['rate_date']
+                        })
+
+                    if self._DB.is_currency_rate_to_change(currency_rate):
+                        changed_currency_rates.append({
+                            'currency_code': currency_rate['currency_code'],
+                            'rate_date': currency_rate['rate_date']
+                        })
+
+                    self._DB.add_currency_rate(currency_rate)
+
+                crawl_date -= datetime.timedelta(days=1)
+
+            else:
+
+                self._LOGGER.debug(
+                    "Update date is different ({}).".format(self.get_date_as_string(update_date))
+                )
+
+                if minimal_date <= update_date:
+
+                    self._LOGGER.debug("Switching to the update date...")
+
+                    crawl_date = update_date
+
+                else:
+
+                    self._LOGGER.debug(
+                        "Unable to switch to the update date since it is less than {} (the minimal one).".format(
+                            minimal_date)
+                    )
+
+                    break
+
+        self.changed_currency_rates_warning(changed_currency_rates)
+        self.historical_currency_rates_warning(historical_currency_rates)
+
+        self._DB.disconnect()
+
+        self._LOGGER.info(
+            "Crawling for {} is done.".format(self.get_date_as_string(self._CURRENT_DATE))
+        )
+
+    def get_data_from_bank(self, request_date) -> tuple:
+
+        def get_response_json() -> dict:
+
+            def get_request_url() -> str:
+
+                request_date_string = request_date.strftime(self.__REQUEST_DATE_FORMAT_STRING)
+
+                return "https://www.centralbank.ae/en/fx-rates-ajax?date={}&v=5".format(request_date_string)
+
+            request_url = get_request_url()
+            response = self.get_response_for_request(request_url)
+
+            return response.json()
+
+        def get_update_date_from_response() -> datetime.date:
+
+            string = response_json["last_updated"].split(" ")
+            string = "{} {} {}".format(string[0], string[1], string[2])
+
+            return datetime.datetime.strptime(string, "%d %b %Y")
+
+        def get_currency_rates_from_response() -> tuple:
+
+            rate_date = self.get_rate_date(update_date_from_response)
+
+            table = BeautifulSoup(response_json["table"], features="html.parser")
+
+            currency_rates = []
+            unknown_currencies = []
+
+            tags = table.find_all('td')
+
+            for index in range(0, len(tags), 2):
+
+                currency_name_tag = tags[index]
+                currency_code = self.get_currency_code(currency_name_tag.text)
+
+                if currency_code is None:
+                    unknown_currencies.append(currency_name_tag)
+
+                if not self.is_currency_code_allowed(currency_code):
+                    continue
+
+                currency_rate_tag = tags[index + 1]
+
+                currency_rates.append({
+                    'currency_code': currency_code,
+                    'import_date': self._CURRENT_DATETIME,
+                    'rate_date': rate_date,
+                    'rate': float(currency_rate_tag.text),
+                })
+
+            return currency_rates, unknown_currencies
+
+        response_json = get_response_json()
+
+        time.sleep(1)
+
+        update_date_from_response = get_update_date_from_response()
+        currency_rates_from_response, unknown_currencies_from_response = get_currency_rates_from_response()
+
+        return update_date_from_response, currency_rates_from_response, unknown_currencies_from_response
+
+
+crawler = CurrentRatesCrawler(__file__)
+
+if __name__ == '__main__':
+    crawler.run()
