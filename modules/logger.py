@@ -1,8 +1,10 @@
+import os
+import requests
+
 import logging
 import logging.config
+
 from logging.handlers import TimedRotatingFileHandler
-import requests
-import os
 
 
 class TelegramMessageHandler(logging.Handler):
@@ -47,36 +49,45 @@ def get_logger(name, config, current_directory):
 
         handler = TimedRotatingFileHandler(file_path, when="d", interval=1, backupCount=30)
 
+        log_format = f"%(asctime)s [%(levelname)s] (%(filename)s).%(funcName)s(%(lineno)d) %(message)s"
+        formatter = logging.Formatter(log_format)
+
+        handler.setFormatter(formatter)
         handler.setLevel(logging.DEBUG)
-        handler.setFormatter(logging.Formatter(log_format))
 
         return handler
 
     def get_stream_handler():
 
-        stream_handler = logging.StreamHandler()
+        handler = logging.StreamHandler()
 
-        stream_handler.setLevel(logging.DEBUG)
-        stream_handler.setFormatter(logging.Formatter(log_format))
+        log_format = f"%(asctime)s [%(levelname)s] %(funcName)s(%(lineno)d) %(message)s"
+        formatter = logging.Formatter(log_format)
 
-        return stream_handler
+        handler.setFormatter(formatter)
+        handler.setLevel(logging.DEBUG)
+
+        return handler
 
     def get_telegram_message_handler():
 
-        telegram_message_handler = TelegramMessageHandler(config['telegram_bot_api_token'], config['telegram_chat_id'])
+        handler = TelegramMessageHandler(config['telegram_bot_api_token'], config['telegram_chat_id'])
 
-        telegram_message_handler.setLevel(logging.INFO)
-        telegram_message_handler.setFormatter(logging.Formatter(log_format))
+        log_format = "%(message)s"
+        formatter = logging.Formatter(log_format)
 
-        return telegram_message_handler
+        handler.setFormatter(formatter)
+        handler.setLevel(logging.INFO)
 
-    log_format = f"%(asctime)s [%(levelname)s] (%(filename)s).%(funcName)s(%(lineno)d) %(message)s"
+        return handler
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
     logger.addHandler(get_stream_handler())
-    logger.addHandler(get_telegram_message_handler())
     logger.addHandler(get_timed_rotating_file_handler())
+
+    if config['telegram_bot_api_token'] != "" and config['telegram_chat_id'] != 0:
+        logger.addHandler(get_telegram_message_handler())
 
     return logger
