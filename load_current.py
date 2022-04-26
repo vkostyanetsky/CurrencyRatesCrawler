@@ -97,7 +97,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         self._DB.disconnect()
 
         self._LOGGER.info(
-            "Crawling for {} is done.".format(self.get_date_as_string(self._CURRENT_DATE))
+            "Regular import for {} is done.".format(self.get_date_as_string(self._CURRENT_DATE))
         )
 
     def get_data_from_bank(self, request_date) -> tuple:
