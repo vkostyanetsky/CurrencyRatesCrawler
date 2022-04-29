@@ -26,6 +26,18 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
 
         self._LOGGER.debug("Attempting to find links to Excel files...")
 
+        """It seems like a not optimal way to avoid CERTIFICATE_VERIFY_FAILED, but it works. 
+
+        Probably creating SSL context via create_default_context() is more appropriate:
+
+            ssl_ctx = ssl.create_default_context()
+            ssl_ctx.check_hostname = False
+            ssl_ctx.verify_mode = ssl.CERT_NONE        
+
+        However, I didn't find out how to apply this to read_excel().         
+        """
+        ssl._create_default_https_context = ssl._create_unverified_context
+
         links_to_files = self.get_links_to_files()
         number_of_links = len(links_to_files)
 
@@ -80,18 +92,6 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
     def load_currency_rates_from_file(self, link, currency_rates):
 
         self._LOGGER.debug("In processing: {}".format(link))
-
-        """It seems like a not optimal way to avoid CERTIFICATE_VERIFY_FAILED, but it works. 
-
-        Probably creating SSL context via create_default_context() is more appropriate:
-         
-            ssl_ctx = ssl.create_default_context()
-            ssl_ctx.check_hostname = False
-            ssl_ctx.verify_mode = ssl.CERT_NONE        
-
-        However, I didn't find out how to apply this to read_excel().         
-        """
-        ssl._create_default_https_context = ssl._create_unverified_context
 
         unknown_currencies = []
 
