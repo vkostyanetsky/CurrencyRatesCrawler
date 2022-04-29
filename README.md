@@ -10,8 +10,8 @@ Open [this page](https://www.centralbank.ae/en/fx-rates). There is a Javascript 
 
 So, it is possible to get rates via two different ways:
 
-    Currency rates for this month can be received via REST service of the bank, which lies behind the Javascript application.
-    Currency rates for previous periods can be found in published Excel files.
+1. Currency rates for this month can be received via REST service of the bank, which lies behind the Javascript application.
+2. Currency rates for previous periods can be found in published Excel files.
 
 ## How to use it?
 
