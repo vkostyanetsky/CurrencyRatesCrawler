@@ -45,7 +45,14 @@ def get_logger(name, config, current_directory):
 
     def get_timed_rotating_file_handler():
 
-        file_path = os.path.join(current_directory, "logs", "{}.log".format(name))
+        dir_path = os.path.join(current_directory, "logs")
+
+        try:
+            os.makedirs(dir_path, exist_ok=True)
+        except OSError:
+            pass
+
+        file_path = os.path.join(dir_path, "{}.log".format(name))
 
         handler = TimedRotatingFileHandler(file_path, when="d", interval=1, backupCount=30)
 
