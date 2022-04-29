@@ -1,63 +1,75 @@
 import datetime
-import os
+import modules.crawler
 
 from flask import Flask
 from flask_restful import Api
 from flask_restful import Resource
 
-import modules.common as common_module
-import modules.logger as logger_module
-import modules.db as db_module
 
+class CrawlerHTTPService(modules.crawler.Crawler):
 
-def get_error_response_using_exception(exception):
+    def __init__(self, file):
 
-    error_message = f"{exception=}"
-    return get_error_response(error_message)
+        super().__init__(file)
 
+    def get_error_response_using_exception(self, exception):
 
-def get_error_response(message):
+        error_message = f"{exception=}"
 
-    data = {'error': message}
+        return self.get_error_response(error_message)
 
-    return data, 200
+    def get_error_response(self, message):
 
+        data = {'error': message}
 
-def get_rates_response(rates):
+        return data, 200
 
-    datetime_format_string = "%Y%m%d%H%M%S"
-    date_format_string = "%Y%m%d"
+    def get_rates_response(self, rates):
 
-    import_dates = []
+        datetime_format_string = "%Y%m%d%H%M%S"
+        date_format_string = "%Y%m%d"
 
-    for rate in rates:
+        import_dates = []
 
-        import_dates.append(rate['import_date'])
+        for rate in rates:
 
-        rate.update({
-            'import_date':  rate['import_date'].strftime(datetime_format_string),
-            'rate_date':    rate['rate_date'].strftime(date_format_string),
-        })
+            import_dates.append(rate['import_date'])
 
-    max_import_date = max(import_dates) if len(import_dates) > 0 else datetime.datetime(1, 1, 1)
-    max_import_date = max_import_date.strftime(datetime_format_string)
+            rate.update({
+                'import_date':  rate['import_date'].strftime(datetime_format_string),
+                'rate_date':    rate['rate_date'].strftime(date_format_string),
+            })
 
-    data = {
-        'rates':            rates,
-        'max_import_date':  max_import_date
-    }
+        max_import_date = max(import_dates) if len(import_dates) > 0 else datetime.datetime(1, 1, 1)
+        max_import_date = max_import_date.strftime(datetime_format_string)
 
-    return data, 200
+        data = {
+            'rates':            rates,
+            'max_import_date':  max_import_date
+        }
+
+        return data, 200
 
 
 class Hello(Resource):
-
     @staticmethod
     def get():
 
         message = 'No action specified.'
 
-        return get_error_response(message)
+        return crawler.get_error_response(message)
+
+
+class Currencies(Resource):
+
+    @staticmethod
+    def get():
+
+        data = {
+            'currencies': crawler._DB.get_currencies()
+        }
+
+        return data, 200
 
 
 class Rates(Resource):
@@ -67,7 +79,7 @@ class Rates(Resource):
 
         message = 'No currency specified.'
 
-        return get_error_response(message)
+        return crawler.get_error_response(message)
 
 
 class RatesWithCurrencyCode(Resource):
@@ -75,18 +87,18 @@ class RatesWithCurrencyCode(Resource):
     @staticmethod
     def get(currency_code: str):
 
-        rates = db.get_currency_rates(currency_code)
+        rates = crawler._DB.get_currency_rates(currency_code)
 
-        return get_rates_response(rates)
+        return crawler.get_rates_response(rates)
 
 
 class RatesWithCurrencyCodeAndDate(Resource):
 
     @staticmethod
     def get(currency_code: str, date: str):
-
+        
         def get_date():
-
+            
             year = int(date[:4])
             month = int(date[4:6])
             day = int(date[6:8])
@@ -104,12 +116,14 @@ class RatesWithCurrencyCodeAndDate(Resource):
         except ValueError:
 
             error_message = "Unable to parse a date."
-            return get_error_response(error_message)
+            return crawler.get_error_response(error_message)
 
-        rates = db.get_currency_rates(currency_code, date)
+        rates = crawler._DB.get_currency_rates(currency_code, import_date=date)
 
-        return get_rates_response(rates)
+        return crawler.get_rates_response(rates)
 
+
+crawler = CrawlerHTTPService(__file__)
 
 app = Flask(__name__)
 api = Api(app)
@@ -117,6 +131,11 @@ api = Api(app)
 api.add_resource(
     Hello,
     '/'
+)
+
+api.add_resource(
+    Currencies,
+    "/currencies/", "/currencies/"
 )
 
 api.add_resource(
@@ -133,12 +152,6 @@ api.add_resource(
     RatesWithCurrencyCodeAndDate,
     "/rates/<currency_code>/", "/rates/<currency_code>/<date>/"
 )
-
-current_directory = os.path.abspath(os.path.dirname(__file__))
-config = common_module.get_config(current_directory)
-logger = logger_module.get_logger(os.path.basename(__file__), config, current_directory)
-
-db = db_module.CrawlerDB(config)
 
 if __name__ == '__main__':
     app.run()
