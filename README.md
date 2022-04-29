@@ -23,7 +23,7 @@ So, it is possible to get rates via two different ways:
 
 Have a look at [configuration file](config.yaml).
 
-What do I need to run it?
+## What do I need to run it?
 
 It's vital to have Python 3 (written and tested on 3.10.4) and MongoDB (tested on 5.0.6) installed.
 
