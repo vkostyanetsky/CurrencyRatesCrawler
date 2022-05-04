@@ -24,82 +24,6 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
         super().__init__(file)
 
-    def run(self):
-
-        changed_currency_rates = []
-        historical_currency_rates = []
-
-        minimal_date = self._CURRENT_DATE - datetime.timedelta(
-            days=self._CONFIG['number_of_days_to_check']
-        )
-
-        crawl_date = self._CURRENT_DATE
-
-        while crawl_date >= minimal_date:
-
-            self._LOGGER.debug(
-                "Crawling date: {}...".format(self.get_date_as_string(crawl_date))
-            )
-
-            update_date, currency_rates, unknown_currencies = self.get_data_from_bank(crawl_date)
-
-            self.unknown_currencies_warning(unknown_currencies)
-
-            if update_date == crawl_date:
-
-                self._LOGGER.debug("Update date is equal.")
-
-                for currency_rate in currency_rates:
-
-                    if not self._DB.is_currency_rate_to_add(currency_rate):
-                        continue
-
-                    if currency_rate['rate_date'] < self._CURRENT_DATE:
-                        historical_currency_rates.append({
-                            'currency_code': currency_rate['currency_code'],
-                            'rate_date': currency_rate['rate_date']
-                        })
-
-                    if self._DB.is_currency_rate_to_change(currency_rate):
-                        changed_currency_rates.append({
-                            'currency_code': currency_rate['currency_code'],
-                            'rate_date': currency_rate['rate_date']
-                        })
-
-                    self._DB.add_currency_rate(currency_rate)
-
-                crawl_date -= datetime.timedelta(days=1)
-
-            else:
-
-                self._LOGGER.debug(
-                    "Update date is different ({}).".format(self.get_date_as_string(update_date))
-                )
-
-                if minimal_date <= update_date:
-
-                    self._LOGGER.debug("Switching to the update date...")
-
-                    crawl_date = update_date
-
-                else:
-
-                    self._LOGGER.debug(
-                        "Unable to switch to the update date since it is less than {} (the minimal one).".format(
-                            minimal_date)
-                    )
-
-                    break
-
-        self.changed_currency_rates_warning(changed_currency_rates)
-        self.historical_currency_rates_warning(historical_currency_rates)
-
-        self._DB.disconnect()
-
-        self._LOGGER.info(
-            "Regular import for {} is done.".format(self.get_date_as_string(self._CURRENT_DATE))
-        )
-
     def get_data_from_bank(self, request_date) -> tuple:
 
         def get_response_json() -> dict:
@@ -163,6 +87,98 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         currency_rates_from_response, unknown_currencies_from_response = get_currency_rates_from_response()
 
         return update_date_from_response, currency_rates_from_response, unknown_currencies_from_response
+
+    def send_final_message(self, number_of_added_rates):
+
+        current_date_presentation = self.get_date_as_string(self._CURRENT_DATE)
+
+        final_message = "Regular import for {} is done.".format(current_date_presentation)
+
+        if number_of_added_rates > 0:
+            final_message_suffix = "Number of added or changes rates: {}.".format(number_of_added_rates)
+        else:
+            final_message_suffix = "No changes found."
+
+        final_message = "{} {}".format(final_message, final_message_suffix)
+
+        self._LOGGER.info(final_message)
+
+    def run(self):
+
+        number_of_added_rates = 0
+        changed_currency_rates = []
+        historical_currency_rates = []
+
+        minimal_date = self._CURRENT_DATE - datetime.timedelta(
+            days=self._CONFIG['number_of_days_to_check']
+        )
+
+        crawl_date = self._CURRENT_DATE
+
+        while crawl_date >= minimal_date:
+
+            self._LOGGER.debug(
+                "Crawling date: {}...".format(self.get_date_as_string(crawl_date))
+            )
+
+            update_date, currency_rates, unknown_currencies = self.get_data_from_bank(crawl_date)
+
+            self.unknown_currencies_warning(unknown_currencies)
+
+            if update_date == crawl_date:
+
+                self._LOGGER.debug("Update date is equal.")
+
+                for currency_rate in currency_rates:
+
+                    if not self._DB.is_currency_rate_to_add(currency_rate):
+                        continue
+
+                    if currency_rate['rate_date'] < self._CURRENT_DATE:
+                        historical_currency_rates.append({
+                            'currency_code': currency_rate['currency_code'],
+                            'rate_date': currency_rate['rate_date']
+                        })
+
+                    if self._DB.is_currency_rate_to_change(currency_rate):
+                        changed_currency_rates.append({
+                            'currency_code': currency_rate['currency_code'],
+                            'rate_date': currency_rate['rate_date']
+                        })
+
+                    self._DB.add_currency_rate(currency_rate)
+
+                    number_of_added_rates += 1
+
+                crawl_date -= datetime.timedelta(days=1)
+
+            else:
+
+                self._LOGGER.debug(
+                    "Update date is different ({}).".format(self.get_date_as_string(update_date))
+                )
+
+                if minimal_date <= update_date:
+
+                    self._LOGGER.debug("Switching to the update date...")
+
+                    crawl_date = update_date
+
+                else:
+
+                    self._LOGGER.debug(
+                        "Unable to switch to the update date since it is less than {} (the minimal one).".format(
+                            minimal_date)
+                    )
+
+                    break
+
+        self.changed_currency_rates_warning(changed_currency_rates)
+        self.historical_currency_rates_warning(historical_currency_rates)
+
+        self.send_final_message(number_of_added_rates)
+
+        self._DB.disconnect()
 
 
 crawler = CurrentRatesCrawler(__file__)
