@@ -95,9 +95,9 @@ class Crawler:
             if config.get(key) is None:
                 config[key] = 5
 
-        def process_parameter_telegram_bot_token():
+        def process_parameter_telegram_bot_api_token():
 
-            key = 'telegram_bot_token'
+            key = 'telegram_bot_api_token'
 
             if config.get(key) is None:
                 config[key] = ''
@@ -130,7 +130,7 @@ class Crawler:
         process_parameter_mongodb_database_name()
         process_parameter_mongodb_max_delay()
 
-        process_parameter_telegram_bot_token()
+        process_parameter_telegram_bot_api_token()
         process_parameter_telegram_chat_id()
 
         process_parameter_currency_codes()
