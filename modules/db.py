@@ -40,64 +40,58 @@ class CrawlerDB:
     def get_currency_rates(
             self,
             currency_code: str,
-            import_date: datetime.datetime = None,
-            rate_date: datetime.datetime = None):
+            import_date: datetime.datetime,
+            start_date: datetime.datetime,
+            end_date: datetime.datetime):
 
-        def get_stage_1():
+        matching_stage = {
+            '$match':
+                {
+                    'currency_code': {'$eq': currency_code.upper()}
+                }
+        }
 
-            stage = {
-                '$match':
-                    {
-                        'currency_code': {'$eq': currency_code.upper()}
-                    }
-            }
+        if import_date is not None:
 
-            if rate_date is not None:
+            """I know about $gt, but for some reason it works as $gte on my MongoDB instance.
 
-                stage['$match']['rate_date'] = {'$eq': rate_date}
+            So I use $gte and add 1 seconds, just to make it looks a bit more logical.
+            """
 
-            if import_date is not None:
+            matching_stage['$match']['import_date'] = {'$gte': import_date + datetime.timedelta(seconds=1)}
 
-                """I know about $gt, but for some reason it works as $gte on my MongoDB instance.
-                
-                So I use $gte and add 1 seconds, just to make it looks a bit more logical.
-                """
+        if start_date is not None or end_date is not None:
 
-                stage['$match']['import_date'] = {'$gte': import_date + datetime.timedelta(seconds=1)}
+            matching_stage['$match']['rate_date'] = {}
 
-            return stage
+            if start_date is not None:
+                matching_stage['$match']['rate_date']['$gte'] = start_date
 
-        def get_stage_2():
+            if end_date is not None:
+                matching_stage['$match']['rate_date']['$lte'] = end_date
 
-            return {
-                '$group':
-                    {
-                        '_id': '$rate_date',
-                        'import_date':
-                            {
-                                '$max':
-                                    {
-                                        'import_date':  '$import_date',
-                                        'rate':         '$rate'
-                                    }
-                            },
-                    }
-            }
+        grouping_stage = {
+            '$group':
+                {
+                    '_id': '$rate_date',
+                    'import_date':
+                        {
+                            '$max':
+                                {
+                                    'import_date':  '$import_date',
+                                    'rate':         '$rate'
+                                }
+                        },
+                }
+        }
+        sorting_stage = {
+            '$sort':
+                {
+                    '_id': 1
+                }
+        }
 
-        def get_stage_3():
-
-            return {
-                '$sort':
-                    {
-                        '_id': 1
-                    }
-            }
-
-        stage_1 = get_stage_1()
-        stage_2 = get_stage_2()
-        stage_3 = get_stage_3()
-
-        stages = [stage_1, stage_2, stage_3]
+        stages = [matching_stage, grouping_stage, sorting_stage]
 
         rates = []
 
