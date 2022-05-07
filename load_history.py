@@ -48,6 +48,9 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
         for link_to_file in links_to_files:
             self.load_currency_rates_from_file(link_to_file, currency_rates)
 
+        self._LOGGER.debug("Crawling results: {} rate(s).".format(len(currency_rates)))
+        self._LOGGER.debug("Inserting rates into the database...")
+
         changed_currency_rates = []
 
         for currency_rate in currency_rates:
