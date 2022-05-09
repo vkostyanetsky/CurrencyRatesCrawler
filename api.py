@@ -6,9 +6,6 @@ from flask_restful import Api
 from flask_restful import Resource
 
 
-from icecream import ic
-
-
 def get_date(date_as_string):
 
     year = int(date_as_string[:4])
