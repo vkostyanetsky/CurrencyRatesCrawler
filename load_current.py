@@ -122,7 +122,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         while crawl_date >= minimal_date:
 
             self._LOGGER.debug(
-                "Crawling date: {}...".format(self.get_date_as_string(crawl_date))
+                "Crawling date: {}".format(self.get_date_as_string(crawl_date))
             )
 
             update_date, currency_rates, unknown_currencies = self.get_data_from_bank(crawl_date)
@@ -164,7 +164,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
                 if minimal_date <= update_date:
 
-                    self._LOGGER.debug("Switching to the update date...")
+                    self._LOGGER.debug("Switching to the update date.")
 
                     crawl_date = update_date
 
