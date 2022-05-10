@@ -32,9 +32,13 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
                 request_date_string = request_date.strftime(self.__REQUEST_DATE_FORMAT_STRING)
 
-                return "https://www.centralbank.ae/en/fx-rates-ajax?date={}&v=5".format(request_date_string)
+                return "https://www.centralbank.ae/en/fx-rates-ajax?date={}".format(request_date_string)
 
             request_url = get_request_url()
+            self._LOGGER.debug(
+                "URL to crawl: {}".format(request_url)
+            )
+
             response = self.get_response_for_request(request_url)
 
             return response.json()
