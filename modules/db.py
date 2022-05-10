@@ -109,7 +109,9 @@ class CrawlerDB:
 
     def is_currency_rate_to_change(self, rate: dict) -> bool:
 
-        current_rates = self.get_currency_rates(rate['currency_code'], rate_date=rate['rate_date'])
+        current_rates = self.get_currency_rates(
+            rate['currency_code'], import_date=None, start_date=rate['rate_date'], end_date=rate['rate_date']
+        )
         rate_for_date = current_rates[0]['rate'] if len(current_rates) > 0 else 0
 
         return rate_for_date != rate['rate']
