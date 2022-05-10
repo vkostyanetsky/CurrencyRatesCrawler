@@ -1,11 +1,11 @@
 # Indicates how many days before the current one will be checked during a crawling process.
 # For instance, if today is 12-04-2022 and this parameter is equal to 2, the crawler
-# will try to get currency rates at 12-04-2022, 11-04-2022, and 10-04-2022.
+# tries to get currency rates at 12-04-2022, 11-04-2022, and 10-04-2022.
 #
 number_of_days_to_check: 2
 
 # Indicates how many days the crawler must add to a date of a rate it gets. For instance,
-# if this parameter is equal to 1 and  UAE Central Bank says that rate of a currency is
+# if this parameter is equal to 1 and UAE Central Bank says that rate of a currency is
 # 3.65 at 12-04-2022, the crawler writes this date to MongoDB as 13-04-2022.
 #
 number_of_days_to_add: 1
