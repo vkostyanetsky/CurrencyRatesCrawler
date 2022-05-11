@@ -46,6 +46,9 @@ class CrawlerHTTPService(modules.crawler.Crawler):
 
         return data, 200
 
+    def get_currencies(self) -> list:
+        return list(self._CONFIG['currency_codes'].values())
+
     def get_currency_rates(
             self,
             currency_code: str,
@@ -91,7 +94,7 @@ class Currencies(Resource):
     @staticmethod
     def get():
         data = {
-            'currencies': crawler._DB.get_currencies()
+            'currencies': crawler.get_currencies()
         }
 
         return data, 200

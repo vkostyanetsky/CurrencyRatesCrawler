@@ -23,19 +23,6 @@ class CrawlerDB:
 
         self.__CLIENT.close()
 
-    def get_currencies(self):
-
-        cursor = self.__RATES_COLLECTION.aggregate([{
-            '$group': {'_id': '$currency_code'}
-        }])
-
-        currencies = []
-
-        for record in cursor:
-            currencies.append(record['_id'])
-
-        return currencies
-
     def get_currency_rates(
             self,
             currency_code: str,
