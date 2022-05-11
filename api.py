@@ -46,7 +46,7 @@ class CrawlerHTTPService(modules.crawler.Crawler):
 
         return data, 200
 
-    def get_currencies(self) -> list:
+    def get_currency_codes(self) -> list:
         return list(self._CONFIG['currency_codes'].values())
 
     def get_currency_rates(
@@ -55,30 +55,39 @@ class CrawlerHTTPService(modules.crawler.Crawler):
             import_date: datetime.datetime = None,
             start_date: datetime.datetime = None,
             end_date: datetime.datetime = None):
-        datetime_format_string = "%Y%m%d%H%M%S"
-        date_format_string = "%Y%m%d"
 
-        import_dates = []
+        if currency_code not in self.get_currency_codes():
 
-        rates = self._DB.get_currency_rates(currency_code, import_date, start_date, end_date)
+            return self.get_error_response(
+                "Rates for the currency code {} can not be obtained from CB UAE.".format(currency_code)
+            )
 
-        for rate in rates:
-            import_dates.append(rate['import_date'])
+        else:
 
-            rate.update({
-                'import_date': rate['import_date'].strftime(datetime_format_string),
-                'rate_date': rate['rate_date'].strftime(date_format_string),
-            })
+            datetime_format_string = "%Y%m%d%H%M%S"
+            date_format_string = "%Y%m%d"
 
-        max_import_date = max(import_dates) if len(import_dates) > 0 else datetime.datetime(1, 1, 1)
-        max_import_date = max_import_date.strftime(datetime_format_string)
+            import_dates = []
 
-        data = {
-            'rates': rates,
-            'max_import_date': max_import_date
-        }
+            rates = self._DB.get_currency_rates(currency_code, import_date, start_date, end_date)
 
-        return data, 200
+            for rate in rates:
+                import_dates.append(rate['import_date'])
+
+                rate.update({
+                    'import_date': rate['import_date'].strftime(datetime_format_string),
+                    'rate_date': rate['rate_date'].strftime(date_format_string),
+                })
+
+            max_import_date = max(import_dates) if len(import_dates) > 0 else datetime.datetime(1, 1, 1)
+            max_import_date = max_import_date.strftime(datetime_format_string)
+
+            data = {
+                'rates': rates,
+                'max_import_date': max_import_date
+            }
+
+            return data, 200
 
 
 class Hello(Resource):
@@ -94,7 +103,7 @@ class Currencies(Resource):
     @staticmethod
     def get():
         data = {
-            'currencies': crawler.get_currencies()
+            'currencies': crawler.get_currency_codes()
         }
 
         return data, 200
