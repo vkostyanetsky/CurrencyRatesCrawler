@@ -90,9 +90,20 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
         return update_date_from_response, currency_rates_from_response, unknown_currencies_from_response
 
+    def current_date_presentation(self):
+
+        return self.get_date_as_string(self._CURRENT_DATE)
+
+    def send_start_message(self):
+        current_date_presentation = self.current_date_presentation()
+
+        self._LOGGER.debug(
+            "Regular import for {} is started.".format(current_date_presentation)
+        )
+
     def send_final_message(self, number_of_added_rates):
 
-        current_date_presentation = self.get_date_as_string(self._CURRENT_DATE)
+        current_date_presentation = self.current_date_presentation()
 
         final_message = "Regular import for {} is done.".format(current_date_presentation)
 
@@ -106,6 +117,8 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         self._LOGGER.info(final_message)
 
     def run(self):
+
+        self.send_start_message()
 
         number_of_added_rates = 0
         changed_currency_rates = []
