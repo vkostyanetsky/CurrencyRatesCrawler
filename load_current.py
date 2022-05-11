@@ -23,19 +23,15 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
         super().__init__(file)
 
-    def get_data_from_bank(self, request_date) -> tuple:
+    def get_request_url(self, crawl_date: datetime.datetime) -> str:
+
+        request_date_string = crawl_date.strftime(self.__REQUEST_DATE_FORMAT_STRING)
+
+        return "https://www.centralbank.ae/en/fx-rates-ajax?date={}&v=1".format(request_date_string)
+
+    def get_data_from_bank(self, request_url) -> tuple:
 
         def get_response_json() -> dict:
-
-            def get_request_url() -> str:
-                request_date_string = request_date.strftime(self.__REQUEST_DATE_FORMAT_STRING)
-
-                return "https://www.centralbank.ae/en/fx-rates-ajax?date={}".format(request_date_string)
-
-            request_url = get_request_url()
-            self._LOGGER.debug(
-                "URL to crawl: {}".format(request_url)
-            )
 
             response = self.get_response_for_request(request_url)
 
@@ -90,20 +86,18 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
         return update_date_from_response, currency_rates_from_response, unknown_currencies_from_response
 
-    def current_date_presentation(self):
+    def get_current_date_presentation(self):
 
         return self.get_date_as_string(self._CURRENT_DATE)
 
-    def send_start_message(self):
-        current_date_presentation = self.current_date_presentation()
+    def get_start_message(self) -> str:
+        current_date_presentation = self.get_current_date_presentation()
 
-        self._LOGGER.debug(
-            "Regular import for {} is started.".format(current_date_presentation)
-        )
+        return "Regular import for {} is started.".format(current_date_presentation)
 
-    def send_final_message(self, number_of_added_rates):
+    def get_final_message(self, number_of_added_rates) -> str:
 
-        current_date_presentation = self.current_date_presentation()
+        current_date_presentation = self.get_current_date_presentation()
 
         final_message = "Regular import for {} is done.".format(current_date_presentation)
 
@@ -112,13 +106,11 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         else:
             final_message_suffix = "No changes found."
 
-        final_message = "{} {}".format(final_message, final_message_suffix)
-
-        self._LOGGER.info(final_message)
+        return "{} {}".format(final_message, final_message_suffix)
 
     def run(self):
 
-        self.send_start_message()
+        self._LOGGER.debug(self.get_start_message())
 
         number_of_added_rates = 0
         changed_currency_rates = []
@@ -133,16 +125,22 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         while crawl_date >= minimal_date:
 
             self._LOGGER.debug(
-                "Crawling date: {}".format(self.get_date_as_string(crawl_date))
+                "CRAWLING DATE: {}".format(self.get_date_as_string(crawl_date))
             )
 
-            update_date, currency_rates, unknown_currencies = self.get_data_from_bank(crawl_date)
+            request_url = self.get_request_url(crawl_date)
+
+            self._LOGGER.debug(
+                "Link to crawl: {}".format(request_url)
+            )
+
+            update_date, currency_rates, unknown_currencies = self.get_data_from_bank(request_url)
 
             self.unknown_currencies_warning(unknown_currencies)
 
             if update_date == crawl_date:
 
-                self._LOGGER.debug("Update date is equal.")
+                self._LOGGER.debug("Update date is equal to the crawling one.")
 
                 for currency_rate in currency_rates:
 
@@ -170,7 +168,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
             else:
 
                 self._LOGGER.debug(
-                    "Update date is different ({}).".format(self.get_date_as_string(update_date))
+                    "Update date ({}) is not equal to crawling one.".format(self.get_date_as_string(update_date))
                 )
 
                 if minimal_date <= update_date:
@@ -191,7 +189,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         self.changed_currency_rates_warning(changed_currency_rates)
         self.historical_currency_rates_warning(historical_currency_rates)
 
-        self.send_final_message(number_of_added_rates)
+        self._LOGGER.info(self.get_final_message(number_of_added_rates))
 
         self._DB.disconnect()
 
