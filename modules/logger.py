@@ -8,7 +8,6 @@ from logging.handlers import TimedRotatingFileHandler
 
 
 class TelegramMessageHandler(logging.Handler):
-
     BOT_API_TOKEN: str = ""
     CHAT_ID = ""
 
@@ -42,7 +41,6 @@ class TelegramMessageHandler(logging.Handler):
 
 
 def get_logger(name, config, current_directory):
-
     def get_timed_rotating_file_handler():
 
         dir_path = os.path.join(current_directory, "logs")

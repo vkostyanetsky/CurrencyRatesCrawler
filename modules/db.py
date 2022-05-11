@@ -4,7 +4,6 @@ import datetime
 
 
 class CrawlerDB:
-
     __CLIENT: pymongo.MongoClient = None
     __DATABASE: pymongo.database.Database = None
     __RATES_COLLECTION: pymongo.collection = None
@@ -52,7 +51,6 @@ class CrawlerDB:
         }
 
         if import_date is not None:
-
             """I know about $gt, but for some reason it works as $gte on my MongoDB instance.
 
             So I use $gte and add 1 seconds, just to make it looks a bit more logical.
@@ -78,8 +76,8 @@ class CrawlerDB:
                         {
                             '$max':
                                 {
-                                    'import_date':  '$import_date',
-                                    'rate':         '$rate'
+                                    'import_date': '$import_date',
+                                    'rate': '$rate'
                                 }
                         },
                 }
@@ -98,11 +96,10 @@ class CrawlerDB:
         cursor = self.__RATES_COLLECTION.aggregate(stages)
 
         for rate in cursor:
-
             rates.append({
-                'import_date':  rate['import_date']['import_date'],
-                'rate_date':    rate['_id'],
-                'rate':         rate['import_date']['rate'],
+                'import_date': rate['import_date']['import_date'],
+                'rate_date': rate['_id'],
+                'rate': rate['import_date']['rate'],
             })
 
         return rates
@@ -120,9 +117,9 @@ class CrawlerDB:
 
         query = {
             '$and': [
-                {'currency_code':   {'$eq': rate['currency_code']}},
-                {'rate_date':       {'$eq': rate['rate_date']}},
-                {'rate':            {'$eq': rate['rate']}}
+                {'currency_code': {'$eq': rate['currency_code']}},
+                {'rate_date': {'$eq': rate['rate_date']}},
+                {'rate': {'$eq': rate['rate']}}
             ]}
 
         return self.__RATES_COLLECTION.count_documents(query) == 0

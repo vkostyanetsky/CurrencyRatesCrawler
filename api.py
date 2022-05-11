@@ -7,7 +7,6 @@ from flask_restful import Resource
 
 
 def get_date(date_as_string):
-
     year = int(date_as_string[:4])
     month = int(date_as_string[4:6])
     day = int(date_as_string[6:8])
@@ -30,23 +29,19 @@ def get_date(date_as_string):
 class CrawlerHTTPService(modules.crawler.Crawler):
 
     def __init__(self, file):
-
         super().__init__(file)
 
     def get_error_response_using_exception(self, exception):
-
         error_message = f"{exception=}"
 
         return self.get_error_response(error_message)
 
     def get_error_response_using_date(self, date):
-
         error_message = "Unable to parse a date: {}".format(date)
 
         return self.get_error_response(error_message)
 
     def get_error_response(self, message):
-
         data = {'error': message}
 
         return data, 200
@@ -57,7 +52,6 @@ class CrawlerHTTPService(modules.crawler.Crawler):
             import_date: datetime.datetime = None,
             start_date: datetime.datetime = None,
             end_date: datetime.datetime = None):
-
         datetime_format_string = "%Y%m%d%H%M%S"
         date_format_string = "%Y%m%d"
 
@@ -66,7 +60,6 @@ class CrawlerHTTPService(modules.crawler.Crawler):
         rates = self._DB.get_currency_rates(currency_code, import_date, start_date, end_date)
 
         for rate in rates:
-
             import_dates.append(rate['import_date'])
 
             rate.update({
@@ -88,7 +81,6 @@ class CrawlerHTTPService(modules.crawler.Crawler):
 class Hello(Resource):
     @staticmethod
     def get():
-
         message = 'No action specified.'
 
         return crawler.get_error_response(message)
@@ -98,7 +90,6 @@ class Currencies(Resource):
 
     @staticmethod
     def get():
-
         data = {
             'currencies': crawler._DB.get_currencies()
         }
@@ -110,7 +101,6 @@ class Rates(Resource):
 
     @staticmethod
     def get():
-
         message = 'No currency specified.'
 
         return crawler.get_error_response(message)
@@ -120,7 +110,6 @@ class RatesUsingCurrencyCode(Resource):
 
     @staticmethod
     def get(currency_code: str):
-
         return crawler.get_currency_rates(currency_code)
 
 

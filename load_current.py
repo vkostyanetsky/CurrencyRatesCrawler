@@ -17,7 +17,6 @@ from bs4 import BeautifulSoup
 
 
 class CurrentRatesCrawler(modules.crawler.Crawler):
-
     __REQUEST_DATE_FORMAT_STRING = "%#d-%#m-%Y" if platform.system() == "Windows" else "%-d-%-m-%Y"
 
     def __init__(self, file):
@@ -29,7 +28,6 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         def get_response_json() -> dict:
 
             def get_request_url() -> str:
-
                 request_date_string = request_date.strftime(self.__REQUEST_DATE_FORMAT_STRING)
 
                 return "https://www.centralbank.ae/en/fx-rates-ajax?date={}".format(request_date_string)

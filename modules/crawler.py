@@ -12,7 +12,6 @@ from requests.structures import CaseInsensitiveDict
 
 
 class Crawler:
-
     _CURRENT_DIRECTORY: str
     _CURRENT_DATETIME: datetime.datetime
     _CURRENT_DATE: datetime.datetime
@@ -159,7 +158,6 @@ class Crawler:
     def unknown_currencies_warning(self, unknown_currencies):
 
         if len(unknown_currencies) > 0:
-
             unknown_currencies = list(set(unknown_currencies))
 
             currencies_string = ", ".join(unknown_currencies)
@@ -212,7 +210,6 @@ class Crawler:
     def get_response_for_request(request_url: str) -> Response:
 
         def get_request_headers() -> CaseInsensitiveDict:
-
             headers = CaseInsensitiveDict()
             headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
             headers['Pragma'] = 'no-cache'

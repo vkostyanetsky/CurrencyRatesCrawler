@@ -60,8 +60,8 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
 
             if self._DB.is_currency_rate_to_change(currency_rate):
                 changed_currency_rates.append({
-                    'currency_code':    currency_rate['currency_code'],
-                    'rate_date':        currency_rate['rate_date']
+                    'currency_code': currency_rate['currency_code'],
+                    'rate_date': currency_rate['rate_date']
                 })
 
             self._DB.add_currency_rate(currency_rate)
@@ -123,10 +123,10 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
             rate_date = self.get_rate_date(rate_date)
 
             currency_rates.append({
-                "currency_code":    currency_code,
-                "import_date":      self._CURRENT_DATETIME,
-                "rate_date":        rate_date,
-                "rate":             float(rate_column[index]),
+                "currency_code": currency_code,
+                "import_date": self._CURRENT_DATETIME,
+                "rate_date": rate_date,
+                "rate": float(rate_column[index]),
             })
 
         self.unknown_currencies_warning(unknown_currencies)
