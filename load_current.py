@@ -141,29 +141,43 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
             if update_date == crawl_date:
 
                 self._LOGGER.debug("Update date is equal to the crawling one.")
+                self._LOGGER.debug("Rates obtained: {}".format(len(currency_rates)))
+
+                number_of_historical = 0
+                number_of_changed = 0
+                number_of_added = 0
 
                 for currency_rate in currency_rates:
 
                     if not self._DB.is_currency_rate_to_add(currency_rate):
                         continue
 
-                    if currency_rate['rate_date'] < self._CURRENT_DATE:
+                    if currency_rate['rate_date'] < self.get_rate_date(self._CURRENT_DATE):
+                        number_of_historical += 1
                         historical_currency_rates.append({
                             'currency_code': currency_rate['currency_code'],
                             'rate_date': currency_rate['rate_date']
                         })
 
                     if self._DB.is_currency_rate_to_change(currency_rate):
+                        number_of_changed += 1
                         changed_currency_rates.append({
                             'currency_code': currency_rate['currency_code'],
                             'rate_date': currency_rate['rate_date']
                         })
 
+                    number_of_added += 1
                     self._DB.add_currency_rate(currency_rate)
 
                     number_of_added_rates += 1
 
                 crawl_date -= datetime.timedelta(days=1)
+
+                self._LOGGER.debug(
+                    "Rates added: {} (historical: {}, changed: {}).".format(
+                        number_of_added, number_of_historical, number_of_changed
+                    )
+                )
 
             else:
 

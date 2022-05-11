@@ -149,11 +149,11 @@ class Crawler:
 
         return self._CONFIG['currency_codes'].get(currency_presentation)
 
-    def get_rate_date(self, update_date) -> datetime.datetime:
+    def get_rate_date(self, source_date) -> datetime.datetime:
 
         date_delta = datetime.timedelta(days=self._CONFIG['number_of_days_to_add'])
 
-        return datetime.datetime(update_date.year, update_date.month, update_date.day) + date_delta
+        return datetime.datetime(source_date.year, source_date.month, source_date.day) + date_delta
 
     def unknown_currencies_warning(self, unknown_currencies):
 
