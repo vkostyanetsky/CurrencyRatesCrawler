@@ -31,18 +31,14 @@ class CrawlerHTTPService(modules.crawler.Crawler):
     def __init__(self, file):
         super().__init__(file)
 
-    def get_error_response_using_exception(self, exception):
-        error_message = f"{exception=}"
-
-        return self.get_error_response(error_message)
-
     def get_error_response_using_date(self, date):
-        error_message = "Unable to parse a date: {}".format(date)
+        return self.get_error_response(code=3, message="Unable to parse a date: {}".format(date))
 
-        return self.get_error_response(error_message)
-
-    def get_error_response(self, message):
-        data = {'message': message}
+    def get_error_response(self, code, message):
+        data = {
+            'error_message': message,
+            'error_code': code
+        }
 
         return data, 200
 
@@ -59,7 +55,8 @@ class CrawlerHTTPService(modules.crawler.Crawler):
         if currency_code not in self.get_currency_codes():
 
             return self.get_error_response(
-                "Rates for the currency code {} can not be obtained from CB UAE.".format(currency_code)
+                code=4,
+                message='Exchange rates for the currency code "{}" cannot be found at UAE CB.'.format(currency_code)
             )
 
         else:
@@ -93,9 +90,7 @@ class CrawlerHTTPService(modules.crawler.Crawler):
 class Hello(Resource):
     @staticmethod
     def get():
-        message = 'No action specified.'
-
-        return crawler.get_error_response(message)
+        return crawler.get_error_response(code=1, message='No action specified.')
 
 
 class Currencies(Resource):
@@ -113,9 +108,7 @@ class Rates(Resource):
 
     @staticmethod
     def get():
-        message = 'No currency specified.'
-
-        return crawler.get_error_response(message)
+        return crawler.get_error_response(code=2, message='No currency specified.')
 
 
 class RatesUsingCurrencyCode(Resource):
