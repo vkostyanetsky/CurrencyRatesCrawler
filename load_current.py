@@ -86,7 +86,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
         return update_date_from_response, currency_rates_from_response, unknown_currencies_from_response
 
-    def get_current_date_presentation(self):
+    def get_current_date_presentation(self) -> str:
 
         return self.get_date_as_string(self._CURRENT_DATE)
 
