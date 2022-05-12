@@ -6,7 +6,8 @@ import datetime
 class CrawlerDB:
     __CLIENT: pymongo.MongoClient = None
     __DATABASE: pymongo.database.Database = None
-    __RATES_COLLECTION: pymongo.collection = None
+    __CURRENCY_RATES_COLLECTION: pymongo.collection = None
+    __IMPORT_DATES_COLLECTION: pymongo.collection = None
 
     def __init__(self, config: dict):
 
@@ -17,11 +18,42 @@ class CrawlerDB:
 
         self.__DATABASE = self.__CLIENT[config['mongodb_database_name']]
 
-        self.__RATES_COLLECTION = self.__DATABASE['currency_rates']
+        self.__CURRENCY_RATES_COLLECTION = self.__DATABASE['currency_rates']
+        self.__IMPORT_DATES_COLLECTION = self.__DATABASE['import_dates']
 
     def disconnect(self):
 
         self.__CLIENT.close()
+
+    def get_last_import_date(self) -> datetime.datetime:
+
+        grouping_stage = {
+            '$group':
+                {
+                    '_id': '$date'
+                }
+        }
+
+        sorting_stage = {
+            '$sort':
+                {
+                    '_id': -1
+                }
+        }
+
+        limiting_stage = {
+            '$limit': 1
+        }
+
+        stages = [grouping_stage, sorting_stage, limiting_stage]
+        result = None
+
+        records = list(self.__IMPORT_DATES_COLLECTION.aggregate(stages))
+
+        if len(records) > 0:
+            result = records[0]['_id']
+
+        return result
 
     def get_currency_rates(
             self,
@@ -36,6 +68,16 @@ class CrawlerDB:
                     'currency_code': {'$eq': currency_code.upper()}
                 }
         }
+
+        last_import_date = self.get_last_import_date()
+
+        if last_import_date is not None:
+            """I know about $lt, but for some reason it works as $lte on my MongoDB instance.
+
+            So I use $lte and subtract 1 seconds, just to make it looks a bit more logical.
+            """
+
+            matching_stage['$match']['import_date'] = {'$lte': last_import_date - datetime.timedelta(seconds=1)}
 
         if import_date is not None:
             """I know about $gt, but for some reason it works as $gte on my MongoDB instance.
@@ -80,7 +122,7 @@ class CrawlerDB:
 
         rates = []
 
-        cursor = self.__RATES_COLLECTION.aggregate(stages)
+        cursor = self.__CURRENCY_RATES_COLLECTION.aggregate(stages)
 
         for rate in cursor:
             rates.append({
@@ -109,8 +151,10 @@ class CrawlerDB:
                 {'rate': {'$eq': rate['rate']}}
             ]}
 
-        return self.__RATES_COLLECTION.count_documents(query) == 0
+        return self.__CURRENCY_RATES_COLLECTION.count_documents(query) == 0
 
     def add_currency_rate(self, rate):
+        self.__CURRENCY_RATES_COLLECTION.insert_one(rate)
 
-        self.__RATES_COLLECTION.insert_one(rate)
+    def add_import_date(self, date):
+        self.__IMPORT_DATES_COLLECTION.insert_one({'date': date})

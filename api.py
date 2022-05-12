@@ -42,7 +42,7 @@ class CrawlerHTTPService(modules.crawler.Crawler):
         return self.get_error_response(error_message)
 
     def get_error_response(self, message):
-        data = {'error': message}
+        data = {'message': message}
 
         return data, 200
 

@@ -203,6 +203,8 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         self.changed_currency_rates_warning(changed_currency_rates)
         self.historical_currency_rates_warning(historical_currency_rates)
 
+        self._DB.add_import_date(self._CURRENT_DATETIME)
+
         self._LOGGER.info(self.get_final_message(number_of_added_rates))
 
         self._DB.disconnect()
