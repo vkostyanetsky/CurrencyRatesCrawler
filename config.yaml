@@ -39,7 +39,7 @@ telegram_chat_id:       0
 # A purpose of the feature is debugging, so usually you don't need this enabled,
 # and you may leave it blank.
 #
-api_endpoint_to_load_rates: "LR-VXFW5FKVPQEVHAVTQPFD"
+api_endpoint_to_load_rates: ""
 
 # Country Currency Codes. Scripts use this list to convert a presentation of a currency
 # to its code, accordingly to ISO 4217 (https://en.wikipedia.org/wiki/ISO_4217).
