@@ -102,7 +102,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         final_message = "Regular import for {} is done.".format(current_date_presentation)
 
         if number_of_added_rates > 0:
-            final_message_suffix = "Number of added or changes rates: {}.".format(number_of_added_rates)
+            final_message_suffix = "Number of added or changed rates: {}.".format(number_of_added_rates)
         else:
             final_message_suffix = "No changes found."
 
