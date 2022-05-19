@@ -108,6 +108,14 @@ class Crawler:
             if config.get(key) is None:
                 config[key] = 0
 
+        def process_parameter_api_endpoint_to_load_rates():
+
+            key = 'api_endpoint_to_load_rates'
+            value = config.get(key)
+
+            if value is None or type(value) != str:
+                config[key] = ''
+
         def process_parameter_currency_codes():
 
             key = 'currency_codes'
@@ -131,6 +139,8 @@ class Crawler:
 
         process_parameter_telegram_bot_api_token()
         process_parameter_telegram_chat_id()
+
+        process_parameter_api_endpoint_to_load_rates()
 
         process_parameter_currency_codes()
 
