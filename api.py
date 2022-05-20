@@ -52,6 +52,8 @@ class CrawlerHTTPService(modules.crawler.Crawler):
             start_date: datetime.datetime = None,
             end_date: datetime.datetime = None):
 
+        currency_code = currency_code.upper()
+
         if currency_code not in self.get_currency_codes():
 
             return self.get_error_response(
