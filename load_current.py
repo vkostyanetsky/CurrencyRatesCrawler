@@ -25,11 +25,8 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
     def get_request_url(self, crawl_date: datetime.datetime) -> str:
 
-        if crawl_date == self._CURRENT_DATE:
-            url_string = "https://www.centralbank.ae/en/fx-rates-ajax"
-        else:
-            request_date_string = crawl_date.strftime(self.__REQUEST_DATE_FORMAT_STRING)
-            url_string = "https://www.centralbank.ae/en/fx-rates-ajax?date={}&v=2".format(request_date_string)
+        request_date_string = crawl_date.strftime(self.__REQUEST_DATE_FORMAT_STRING)
+        url_string = "https://www.centralbank.ae/en/fx-rates-ajax?date={}&v=2".format(request_date_string)
 
         return url_string
 
