@@ -23,12 +23,68 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
         super().__init__(file)
 
-    def get_request_url(self, crawl_date: datetime.datetime) -> str:
+    def get_rates_from_soup(self, soup: BeautifulSoup, rate_date: datetime.datetime) -> tuple:
 
-        request_date_string = crawl_date.strftime(self.__REQUEST_DATE_FORMAT_STRING)
+        currency_rates = []
+        unknown_currencies = []
+
+        tags = soup.find_all('td')
+
+        for index in range(0, len(tags), 2):
+
+            currency_name_tag = tags[index]
+            currency_code = self.get_currency_code(currency_name_tag.text)
+
+            if currency_code is None:
+                unknown_currencies.append(currency_name_tag)
+
+            if not self.is_currency_code_allowed(currency_code):
+                continue
+
+            currency_rate_tag = tags[index + 1]
+
+            currency_rates.append({
+                'currency_code': currency_code,
+                'import_date': self._CURRENT_DATETIME,
+                'rate_date': rate_date,
+                'rate': float(currency_rate_tag.text),
+            })
+
+        return currency_rates, unknown_currencies
+
+    @staticmethod
+    def get_request_url_for_today():
+
+        return "https://www.centralbank.ae/en/fx-rates"
+
+    @staticmethod
+    def get_request_url(crawl_date: datetime.datetime) -> str:
+
+        request_date_string = crawl_date.strftime(CurrentRatesCrawler.__REQUEST_DATE_FORMAT_STRING)
         url_string = "https://www.centralbank.ae/en/fx-rates-ajax?date={}&v=2".format(request_date_string)
 
         return url_string
+
+    def get_data_from_bank_for_today(self):
+
+        response = self.get_response_for_request(self.get_request_url_for_today())
+
+        if response.status_code != 200:
+            raise Exception
+
+        soup = BeautifulSoup(response.text, features="html.parser")
+
+        try:
+            update_date = soup.find("span", {"class": "dir-ltr"})
+            update_date = update_date.text[:11]
+            update_date = datetime.datetime.strptime(update_date, "%d %b %Y")
+
+        except Exception:
+            raise Exception
+
+        currency_rates, unknown_currencies = self.get_rates_from_soup(soup, update_date)
+
+        return update_date, currency_rates, unknown_currencies
 
     def get_data_from_bank(self, request_url) -> tuple:
 
@@ -51,32 +107,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
             table = BeautifulSoup(response_json["table"], features="html.parser")
 
-            currency_rates = []
-            unknown_currencies = []
-
-            tags = table.find_all('td')
-
-            for index in range(0, len(tags), 2):
-
-                currency_name_tag = tags[index]
-                currency_code = self.get_currency_code(currency_name_tag.text)
-
-                if currency_code is None:
-                    unknown_currencies.append(currency_name_tag)
-
-                if not self.is_currency_code_allowed(currency_code):
-                    continue
-
-                currency_rate_tag = tags[index + 1]
-
-                currency_rates.append({
-                    'currency_code': currency_code,
-                    'import_date': self._CURRENT_DATETIME,
-                    'rate_date': rate_date,
-                    'rate': float(currency_rate_tag.text),
-                })
-
-            return currency_rates, unknown_currencies
+            return self.get_rates_from_soup(table, rate_date)
 
         response_json = get_response_json()
 
@@ -129,13 +160,23 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
                 "CRAWLING DATE: {}".format(self.get_date_as_string(crawl_date))
             )
 
-            request_url = self.get_request_url(crawl_date)
+            if crawl_date == self._CURRENT_DATE:
 
-            self._LOGGER.debug(
-                "Link to crawl: {}".format(request_url)
-            )
+                self._LOGGER.debug(
+                    "HTML to parse: {}".format(self.get_request_url_for_today())
+                )
 
-            update_date, currency_rates, unknown_currencies = self.get_data_from_bank(request_url)
+                update_date, currency_rates, unknown_currencies = self.get_data_from_bank_for_today()
+
+            else:
+
+                request_url = self.get_request_url(crawl_date)
+
+                self._LOGGER.debug(
+                    "JSON to parse: {}".format(request_url)
+                )
+
+                update_date, currency_rates, unknown_currencies = self.get_data_from_bank(request_url)
 
             self.unknown_currencies_warning(unknown_currencies)
 
@@ -174,11 +215,14 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
                 crawl_date -= datetime.timedelta(days=1)
 
-                self._LOGGER.debug(
-                    "Rates added: {} (historical: {}, changed: {}).".format(
-                        number_of_added, number_of_historical, number_of_changed
+                if number_of_added == 0:
+                    self._LOGGER.debug("Rates added: 0")
+                else:
+                    self._LOGGER.debug(
+                        "Rates added: {} (historical: {}, changed: {}).".format(
+                            number_of_added, number_of_historical, number_of_changed
+                        )
                     )
-                )
 
             else:
 
@@ -195,7 +239,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
                 else:
 
                     self._LOGGER.debug(
-                        "Unable to switch to the update date since it is less than {} (the minimal one).".format(
+                        "Unable to switch to the update date since it is less than the minimal one ({}).".format(
                             minimal_date)
                     )
 
