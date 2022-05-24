@@ -34,7 +34,7 @@ class Crawler:
             os.path.basename(file),
             self._CONFIG,
             self._CURRENT_DIRECTORY,
-            self._CURRENT_DATE,
+            self._CURRENT_DATETIME,
             self._DB
         )
 
