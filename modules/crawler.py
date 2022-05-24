@@ -226,6 +226,7 @@ class Crawler:
             headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
             headers['Pragma'] = 'no-cache'
             headers['Expires'] = '0'
+            headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0' # TODO
 
             return headers
 
@@ -250,3 +251,6 @@ class Crawler:
     def get_date_as_string(date: datetime.datetime) -> str:
 
         return date.strftime('%Y-%m-%d')
+
+    def run(self) -> None:
+        self._LOGGER.debug("Oh, hi Mark.")
