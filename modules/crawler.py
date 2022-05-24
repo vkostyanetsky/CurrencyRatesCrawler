@@ -38,6 +38,13 @@ class Crawler:
             self._DB
         )
 
+    def get_log_message_about_import_date(self) -> str:
+
+        import_date_readable = self._CURRENT_DATETIME.strftime('%Y-%m-%d %H:%M:%S')
+        import_date = self._CURRENT_DATETIME.strftime('%Y%m%d%H%M%S')
+
+        return "Import date is {} ({}).".format(import_date_readable, import_date)
+
     def get_config(self) -> dict:
 
         def get_yaml_data(yaml_filepath) -> dict:
