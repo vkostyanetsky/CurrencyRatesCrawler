@@ -71,21 +71,18 @@ class CrawlerDB:
 
         last_import_date = self.get_last_import_date()
 
+        if last_import_date is not None or import_date is not None:
+            matching_stage['$match']['import_date'] = {}
+
         if last_import_date is not None:
-            """I know about $lt, but for some reason it works as $lte on my MongoDB instance.
-
-            So I use $lte and subtract 1 seconds, just to make it looks a bit more logical.
-            """
-
-            matching_stage['$match']['import_date'] = {'$lte': last_import_date - datetime.timedelta(seconds=1)}
+            matching_stage['$match']['import_date'].update({'$lte': last_import_date})
 
         if import_date is not None:
             """I know about $gt, but for some reason it works as $gte on my MongoDB instance.
 
             So I use $gte and add 1 seconds, just to make it looks a bit more logical.
             """
-
-            matching_stage['$match']['import_date'] = {'$gte': import_date + datetime.timedelta(seconds=1)}
+            matching_stage['$match']['import_date'].update({'$gte': import_date + datetime.timedelta(seconds=1)})
 
         if start_date is not None or end_date is not None:
 
