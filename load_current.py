@@ -58,9 +58,9 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         return "https://www.centralbank.ae/en/fx-rates"
 
     @staticmethod
-    def get_request_url(crawl_date: datetime.datetime) -> str:
+    def get_request_url(request_date: datetime.datetime) -> str:
 
-        request_date_string = crawl_date.strftime(CurrentRatesCrawler.__REQUEST_DATE_FORMAT_STRING)
+        request_date_string = request_date.strftime(CurrentRatesCrawler.__REQUEST_DATE_FORMAT_STRING)
         url_string = "https://www.centralbank.ae/en/fx-rates-ajax?date={}&v=2".format(request_date_string)
 
         return url_string
@@ -145,6 +145,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         super().run()
 
         self._LOGGER.debug(self.get_start_message())
+        self._LOGGER.debug(self.get_log_message_about_import_date())
 
         number_of_added_rates = 0
         changed_currency_rates = []
@@ -154,15 +155,15 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
             days=self._CONFIG['number_of_days_to_check']
         )
 
-        crawl_date = self._CURRENT_DATE
+        request_date = self._CURRENT_DATE
 
-        while crawl_date >= minimal_date:
+        while request_date >= minimal_date:
 
             self._LOGGER.debug(
-                "CRAWLING DATE: {}".format(self.get_date_as_string(crawl_date))
+                "REQUEST DATE: {}".format(self.get_date_as_string(request_date))
             )
 
-            if crawl_date == self._CURRENT_DATE:
+            if request_date == self._CURRENT_DATE:
 
                 self._LOGGER.debug(
                     "HTML to parse: {}".format(self.get_request_url_for_today())
@@ -172,7 +173,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
             else:
 
-                request_url = self.get_request_url(crawl_date)
+                request_url = self.get_request_url(request_date)
 
                 self._LOGGER.debug(
                     "JSON to parse: {}".format(request_url)
@@ -182,9 +183,9 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
             self.unknown_currencies_warning(unknown_currencies)
 
-            if update_date == crawl_date:
+            if update_date == request_date:
 
-                self._LOGGER.debug("Update date is equal to the crawling one.")
+                self._LOGGER.debug("Update date is equal to the request date.")
                 self._LOGGER.debug("Processing obtained rates...")
 
                 number_of_historical = 0
@@ -226,7 +227,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
                 self._LOGGER.debug("Obtained rates have been processed.")
 
-                crawl_date -= datetime.timedelta(days=1)
+                request_date -= datetime.timedelta(days=1)
 
                 if number_of_added == 0:
                     self._LOGGER.debug("Rates added: 0")
@@ -240,14 +241,14 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
             else:
 
                 self._LOGGER.debug(
-                    "Update date ({}) is not equal to crawling one.".format(self.get_date_as_string(update_date))
+                    "Update date ({}) is not equal to the request date.".format(self.get_date_as_string(update_date))
                 )
 
                 if minimal_date <= update_date:
 
                     self._LOGGER.debug("Switching to the update date.")
 
-                    crawl_date = update_date
+                    request_date = update_date
 
                 else:
 
