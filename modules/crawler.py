@@ -28,13 +28,15 @@ class Crawler:
         self._CURRENT_DATE = Crawler.get_beginning_of_today()
 
         self._CONFIG = self.get_config()
+        self._DB = modules.db.CrawlerDB(self._CONFIG)
+
         self._LOGGER = modules.logger.get_logger(
             os.path.basename(file),
             self._CONFIG,
-            self._CURRENT_DIRECTORY
+            self._CURRENT_DIRECTORY,
+            self._CURRENT_DATE,
+            self._DB
         )
-
-        self._DB = modules.db.CrawlerDB(self._CONFIG)
 
     def get_config(self) -> dict:
 

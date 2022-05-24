@@ -8,6 +8,8 @@ class CrawlerDB:
     __DATABASE: pymongo.database.Database = None
     __CURRENCY_RATES_COLLECTION: pymongo.collection = None
     __IMPORT_DATES_COLLECTION: pymongo.collection = None
+    __SOURCE_DATA_COLLECTION: pymongo.collection = None
+    __LOGS_COLLECTION: pymongo.collection = None
 
     def __init__(self, config: dict):
 
@@ -20,6 +22,8 @@ class CrawlerDB:
 
         self.__CURRENCY_RATES_COLLECTION = self.__DATABASE['currency_rates']
         self.__IMPORT_DATES_COLLECTION = self.__DATABASE['import_dates']
+        self.__SOURCE_DATA_COLLECTION = self.__DATABASE['source_data']
+        self.__LOGS_COLLECTION = self.__DATABASE['logs']
 
     def disconnect(self):
 
@@ -152,6 +156,20 @@ class CrawlerDB:
 
     def add_currency_rate(self, rate):
         self.__CURRENCY_RATES_COLLECTION.insert_one(rate)
+
+    def add_source_data(self, import_date, request_url, source_data):
+        self.__SOURCE_DATA_COLLECTION.insert_one({
+            'import_date': import_date,
+            'request_url': request_url,
+            'source_data': source_data
+        })
+
+    def add_logs_entry(self, import_date, timestamp, text):
+        self.__LOGS_COLLECTION.insert_one({
+            'import_date': import_date,
+            'timestamp': timestamp,
+            'text': text
+        })
 
     def add_import_date(self, date):
         self.__IMPORT_DATES_COLLECTION.insert_one({'date': date})
