@@ -8,6 +8,9 @@ number_of_days_to_check: 7
 # if this parameter is equal to 1 and UAE Central Bank says that rate of a currency is
 # 3.65 at 12-04-2022, the crawler writes this date to MongoDB as 13-04-2022.
 #
+# The bank used to publish rates every evening, so it looks logical to register them
+# for a next day.
+#
 number_of_days_to_add: 1
 
 # Indicates currencies to work with. Is it has no items, it means that
