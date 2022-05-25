@@ -35,14 +35,14 @@ mongodb_max_delay:          5
 telegram_bot_api_token: ""
 telegram_chat_id:       0
 
-# A name of an API endpoint allows a user to immediately trigger crawling process
-# for a particular date only. Please consider making it hard to pick up
-# (good example of the value: "LR-VXFW5FKVPQEVHAVTQPFD").
+# A name of an API endpoint allows a user to get logs by import date.
+# Please consider making this one hard to pick up (good example
+# of the name: "logs-ueqqp7oemvsqrorx27e2").
 #
 # A purpose of the feature is debugging, so usually you don't need this enabled,
 # and you may leave it blank.
 #
-api_endpoint_to_load_rates: ""
+api_endpoint_to_get_logs: ""
 
 # Country Currency Codes. Scripts use this list to convert a presentation of a currency
 # to its code, accordingly to ISO 4217 (https://en.wikipedia.org/wiki/ISO_4217).

@@ -8,7 +8,6 @@ class CrawlerDB:
     __DATABASE: pymongo.database.Database = None
     __CURRENCY_RATES_COLLECTION: pymongo.collection = None
     __IMPORT_DATES_COLLECTION: pymongo.collection = None
-    __SOURCE_DATA_COLLECTION: pymongo.collection = None
     __LOGS_COLLECTION: pymongo.collection = None
 
     def __init__(self, config: dict):
@@ -22,7 +21,6 @@ class CrawlerDB:
 
         self.__CURRENCY_RATES_COLLECTION = self.__DATABASE['currency_rates']
         self.__IMPORT_DATES_COLLECTION = self.__DATABASE['import_dates']
-        self.__SOURCE_DATA_COLLECTION = self.__DATABASE['source_data']
         self.__LOGS_COLLECTION = self.__DATABASE['logs']
 
     def disconnect(self):
@@ -59,6 +57,17 @@ class CrawlerDB:
 
         return result
 
+    def get_logs(self, import_date: datetime.datetime):
+
+        logs = []
+
+        cursor = self.__LOGS_COLLECTION.find({'import_date': import_date}, {'_id': 0}).sort("timestamp", pymongo.ASCENDING)
+
+        for log in cursor:
+            logs.append(log['text'])
+
+        return logs
+
     def get_currency_rates(
             self,
             currency_code: str,
@@ -82,11 +91,7 @@ class CrawlerDB:
             matching_stage['$match']['import_date'].update({'$lte': last_import_date})
 
         if import_date is not None:
-            """I know about $gt, but for some reason it works as $gte on my MongoDB instance.
-
-            So I use $gte and add 1 seconds, just to make it looks a bit more logical.
-            """
-            matching_stage['$match']['import_date'].update({'$gte': import_date + datetime.timedelta(seconds=1)})
+            matching_stage['$match']['import_date'].update({'$gt': import_date})
 
         if start_date is not None or end_date is not None:
 
@@ -156,13 +161,6 @@ class CrawlerDB:
 
     def add_currency_rate(self, rate):
         self.__CURRENCY_RATES_COLLECTION.insert_one(rate)
-
-    def add_source_data(self, import_date, request_url, source_data):
-        self.__SOURCE_DATA_COLLECTION.insert_one({
-            'import_date': import_date,
-            'request_url': request_url,
-            'source_data': source_data
-        })
 
     def add_logs_entry(self, import_date, timestamp, text):
         self.__LOGS_COLLECTION.insert_one({
