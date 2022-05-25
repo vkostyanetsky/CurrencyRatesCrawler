@@ -69,33 +69,13 @@ class MongoDBRecordHandler(logging.Handler):
             self.handleError(record)
 
 
-def get_logger(name, config, current_directory, import_date, database):
-    def get_timed_rotating_file_handler():
-
-        dir_path = os.path.join(current_directory, "logs")
-
-        try:
-            os.makedirs(dir_path, exist_ok=True)
-        except OSError:
-            pass
-
-        file_path = os.path.join(dir_path, "{}.log".format(name))
-
-        handler = TimedRotatingFileHandler(file_path, when="d", interval=1, backupCount=30)
-
-        log_format = f"%(asctime)s [%(levelname)s] (%(filename)s).%(funcName)s(%(lineno)d) %(message)s"
-        formatter = logging.Formatter(log_format)
-
-        handler.setFormatter(formatter)
-        handler.setLevel(logging.DEBUG)
-
-        return handler
+def get_logger(name, config, import_date, database):
 
     def get_stream_handler():
 
         handler = logging.StreamHandler()
 
-        log_format = f"%(asctime)s [%(levelname)s] %(funcName)s(%(lineno)d) %(message)s"
+        log_format = f"%(asctime)s [%(levelname)s] %(message)s"
         formatter = logging.Formatter(log_format)
 
         handler.setFormatter(formatter)
@@ -119,7 +99,7 @@ def get_logger(name, config, current_directory, import_date, database):
 
         handler = MongoDBRecordHandler(import_date, database)
 
-        log_format = f"%(asctime)s [%(levelname)s] %(funcName)s(%(lineno)d) %(message)s"
+        log_format = f"%(asctime)s [%(levelname)s] %(message)s"
         formatter = logging.Formatter(log_format)
 
         handler.setFormatter(formatter)
@@ -131,7 +111,6 @@ def get_logger(name, config, current_directory, import_date, database):
     logger.setLevel(logging.DEBUG)
 
     logger.addHandler(get_stream_handler())
-    logger.addHandler(get_timed_rotating_file_handler())
 
     if config['telegram_bot_api_token'] != "" and config['telegram_chat_id'] != 0:
         logger.addHandler(get_telegram_message_handler())

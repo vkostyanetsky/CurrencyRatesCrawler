@@ -33,7 +33,6 @@ class Crawler:
         self._LOGGER = modules.logger.get_logger(
             os.path.basename(file),
             self._CONFIG,
-            self._CURRENT_DIRECTORY,
             self._CURRENT_DATETIME,
             self._DB
         )
@@ -225,8 +224,7 @@ class Crawler:
                 "Historical currency rates have been added: {}".format(details)
             )
 
-    @staticmethod
-    def get_response_for_request(request_url: str) -> Response:
+    def get_response_for_request(self, request_url: str) -> Response:
 
         def get_request_headers() -> CaseInsensitiveDict:
             headers = CaseInsensitiveDict()
@@ -241,7 +239,13 @@ class Crawler:
 
         request_headers = get_request_headers()
 
-        return requests.get(request_url, headers=request_headers)
+        response = requests.get(request_url, headers=request_headers)
+
+        self._LOGGER.debug(
+            "Response received. Status code: {}, text:\n{}".format(response.status_code, response.text)
+        )
+
+        return response
 
     @staticmethod
     def get_beginning_of_today() -> datetime:
@@ -258,6 +262,3 @@ class Crawler:
     def get_date_as_string(date: datetime.datetime) -> str:
 
         return date.strftime('%Y-%m-%d')
-
-    def run(self) -> None:
-        self._LOGGER.debug("Oh, hi Mark.")
