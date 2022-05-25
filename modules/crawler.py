@@ -24,8 +24,8 @@ class Crawler:
         # Lets-a-go!
 
         self._CURRENT_DIRECTORY = os.path.abspath(os.path.dirname(file))
-        self._CURRENT_DATETIME = datetime.datetime.now()
-        self._CURRENT_DATE = Crawler.get_beginning_of_today()
+        self._CURRENT_DATETIME = Crawler.get_beginning_of_this_second()
+        self._CURRENT_DATE = Crawler.get_beginning_of_this_day()
 
         self._CONFIG = self.get_config()
         self._DB = modules.db.CrawlerDB(self._CONFIG)
@@ -43,6 +43,9 @@ class Crawler:
         import_date = self._CURRENT_DATETIME.strftime('%Y%m%d%H%M%S')
 
         return "Import date is {} ({}).".format(import_date_readable, import_date)
+
+    def get_config_value(self, key: str) -> any:
+        return self._CONFIG.get(key)
 
     def get_config(self) -> dict:
 
@@ -116,9 +119,9 @@ class Crawler:
             if config.get(key) is None:
                 config[key] = 0
 
-        def process_parameter_api_endpoint_to_load_rates():
+        def process_parameter_api_endpoint_to_get_logs():
 
-            key = 'api_endpoint_to_load_rates'
+            key = 'api_endpoint_to_get_logs'
             value = config.get(key)
 
             if value is None or type(value) != str:
@@ -148,7 +151,7 @@ class Crawler:
         process_parameter_telegram_bot_api_token()
         process_parameter_telegram_chat_id()
 
-        process_parameter_api_endpoint_to_load_rates()
+        process_parameter_api_endpoint_to_get_logs()
 
         process_parameter_currency_codes()
 
@@ -248,7 +251,14 @@ class Crawler:
         return response
 
     @staticmethod
-    def get_beginning_of_today() -> datetime:
+    def get_beginning_of_this_second() -> datetime.datetime:
+
+        now = datetime.datetime.now()
+
+        return now - datetime.timedelta(microseconds=now.microsecond)
+
+    @staticmethod
+    def get_beginning_of_this_day() -> datetime:
 
         today = datetime.date.today()
         return Crawler.get_datetime_from_date(today)

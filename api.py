@@ -88,6 +88,14 @@ class CrawlerHTTPService(modules.crawler.Crawler):
 
             return data, 200
 
+    def get_logs(self, import_date: datetime.datetime):
+
+        data = {
+            "logs": self._DB.get_logs(import_date)
+        }
+
+        return data, 200
+
 
 class Hello(Resource):
     @staticmethod
@@ -174,6 +182,24 @@ class RatesUsingCurrencyCodeAndImportDateAndStartDateAndEndDate(Resource):
         return crawler.get_currency_rates(currency_code, import_date, start_date, end_date)
 
 
+class Logs(Resource):
+
+    @staticmethod
+    def get():
+        return crawler.get_error_response(code=15, message='No import date specified.')
+
+
+class LogsUsingImportDate(Resource):
+
+    @staticmethod
+    def get(import_date: str):
+        try:
+            import_date = get_date(import_date)
+        except ValueError:
+            return crawler.get_error_response_using_date(import_date)
+
+        return crawler.get_logs(import_date)
+
 crawler = CrawlerHTTPService(__file__)
 
 app = Flask(__name__)
@@ -207,6 +233,20 @@ api.add_resource(
     RatesUsingCurrencyCodeAndImportDateAndStartDateAndEndDate,
     "/rates/<currency_code>/<import_date>/<start_date>/<end_date>/"
 )
+
+api_endpoint_to_get_logs = crawler.get_config_value('api_endpoint_to_get_logs')
+
+if api_endpoint_to_get_logs != '':
+
+    api.add_resource(
+        Logs,
+        "/{}/".format(api_endpoint_to_get_logs)
+    )
+
+    api.add_resource(
+        LogsUsingImportDate,
+        "/{}/<import_date>/".format(api_endpoint_to_get_logs)
+    )
 
 if __name__ == '__main__':
     app.run()
