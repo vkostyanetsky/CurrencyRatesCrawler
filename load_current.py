@@ -127,13 +127,14 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
     def get_start_message(self) -> str:
         current_date_presentation = self.get_current_date_presentation()
 
-        return "REGULAR IMPORT IS STARTED.".format(current_date_presentation)
+        return "Regular import is started.".format(current_date_presentation)
 
     def get_final_message(self, number_of_added_rates) -> str:
 
         current_date_presentation = self.get_current_date_presentation()
+        import_date_as_string = self.get_import_date_as_string()
 
-        final_message = "Regular import is done.".format(current_date_presentation)
+        final_message = "Regular import for {} ({}) is done.".format(current_date_presentation, import_date_as_string)
 
         if number_of_added_rates > 0:
             final_message_suffix = "Number of added or changed rates: {}.".format(number_of_added_rates)

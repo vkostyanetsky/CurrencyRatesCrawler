@@ -41,6 +41,8 @@ class Crawler:
             self._DB
         )
 
+        self._LOGGER.debug("Initialization completed.")
+
     def _load_session(self) -> None:
 
         self._session = requests.session()
@@ -50,14 +52,8 @@ class Crawler:
             with open(self._session_file_name, 'rb') as file:
                 self._session.cookies.update(pickle.load(file))
 
-            if len(self._session.cookies) > 0:
-
-                cookies = ["Cookies are:"]
-
-                for cookie in self._session.cookies:
-                    cookies.append("- " + cookie.name + " = " + cookie.value)
-
-                self._LOGGER.debug("\n".join(cookies))
+            for cookie in self._session.cookies:
+                self._LOGGER.debug("Cookie restored: " + cookie.name + " = " + cookie.value)
 
         except FileNotFoundError:
 
@@ -82,10 +78,12 @@ class Crawler:
         with open(self._session_file_name, 'wb') as file:
             pickle.dump(self._session.cookies, file)
 
-    def get_log_message_about_import_date(self) -> str:
+    def get_import_date_as_string(self) -> str:
+        return self._CURRENT_DATETIME.strftime('%Y%m%d%H%M%S')
 
+    def get_log_message_about_import_date(self) -> str:
         import_date_readable = self._CURRENT_DATETIME.strftime('%Y-%m-%d %H:%M:%S')
-        import_date = self._CURRENT_DATETIME.strftime('%Y%m%d%H%M%S')
+        import_date = self.get_import_date_as_string()
 
         return "Import date is {} ({}).".format(import_date_readable, import_date)
 
