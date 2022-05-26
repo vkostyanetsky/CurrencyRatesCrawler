@@ -1,6 +1,7 @@
 import os
 import time
 import yaml
+import pickle
 import datetime
 import requests
 import modules.db
@@ -18,6 +19,9 @@ class Crawler:
     _CONFIG: dict
     _LOGGER: Logger
     _DB: modules.db.CrawlerDB
+
+    _session_file_name = "session.bin"
+    _session: requests.sessions.Session
 
     def __init__(self, file):
 
@@ -37,10 +41,49 @@ class Crawler:
             self._DB
         )
 
-    def get_log_message_about_import_date(self) -> str:
+        self._LOGGER.debug("Initialization completed.")
 
+    def _load_session(self) -> None:
+
+        self._session = requests.session()
+
+        try:
+
+            with open(self._session_file_name, 'rb') as file:
+                self._session.cookies.update(pickle.load(file))
+
+            for cookie in self._session.cookies:
+                self._LOGGER.debug("Cookie restored: " + cookie.name + " = " + cookie.value)
+
+        except FileNotFoundError:
+
+            self._LOGGER.warning(
+                f"The session dump file ({self._session_file_name}) is not found."
+            )
+
+        except OSError:
+
+            self._LOGGER.warning(
+                f"OS error occurred trying to open session dump file ({self._session_file_name})."
+            )
+
+        except Exception as exception:
+
+            self._LOGGER.warning(
+                f"Unexpected error opening session dump file ({self._session_file_name}): ", repr(exception)
+            )
+
+    def _save_session(self) -> None:
+
+        with open(self._session_file_name, 'wb') as file:
+            pickle.dump(self._session.cookies, file)
+
+    def get_import_date_as_string(self) -> str:
+        return self._CURRENT_DATETIME.strftime('%Y%m%d%H%M%S')
+
+    def get_log_message_about_import_date(self) -> str:
         import_date_readable = self._CURRENT_DATETIME.strftime('%Y-%m-%d %H:%M:%S')
-        import_date = self._CURRENT_DATETIME.strftime('%Y%m%d%H%M%S')
+        import_date = self.get_import_date_as_string()
 
         return "Import date is {} ({}).".format(import_date_readable, import_date)
 
@@ -242,7 +285,9 @@ class Crawler:
 
         request_headers = get_request_headers()
 
-        response = requests.get(request_url, headers=request_headers)
+        response = self._session.get(request_url, headers=request_headers)
+
+        self._save_session()
 
         self._LOGGER.debug(
             "Response received. Status code: {}, text:\n{}".format(response.status_code, response.text)
