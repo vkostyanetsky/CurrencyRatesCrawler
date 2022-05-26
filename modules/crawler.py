@@ -20,7 +20,7 @@ class Crawler:
     _LOGGER: Logger
     _DB: modules.db.CrawlerDB
 
-    _session_file_name = "session.bin"
+    _session_file_name: str = "session.bin"
     _session: requests.sessions.Session
 
     def __init__(self, file):
