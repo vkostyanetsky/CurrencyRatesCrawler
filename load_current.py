@@ -23,6 +23,8 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
         super().__init__(file)
 
+        self._load_session()
+
     def get_rates_from_soup(self, soup: BeautifulSoup, rate_date: datetime.datetime) -> tuple:
 
         currency_rates = []
