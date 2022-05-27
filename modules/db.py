@@ -70,26 +70,27 @@ class CrawlerDB:
 
         return logs
 
-    def insert_historical_file(self, link: str, hash: str, import_date: datetime.datetime) -> None:
-        self.__HISTORICAL_FILES_COLLECTION.insert_one({
-            'link': link,
-            'hash': hash,
+    def insert_historical_file(self, file_link: str, file_hash: str, import_date: datetime.datetime) -> None:
+        query_values = {
+            'link': file_link,
+            'hash': file_hash,
             'import_date': import_date,
-        })
+        }
 
-    def update_historical_file(self, link: str, hash: str, import_date: datetime.datetime) -> None:
+        self.__HISTORICAL_FILES_COLLECTION.insert_one(query_values)
 
-        query_filter = {'link': link}
+    def update_historical_file(self, file_link: str, file_hash: str, import_date: datetime.datetime) -> None:
+        query_filter = {'link': file_link}
         query_values = {
             "$set": {
-                'hash': hash,
+                'hash': file_hash,
                 'import_date': import_date
             }
         }
 
         self.__HISTORICAL_FILES_COLLECTION.update_one(query_filter, query_values)
 
-    def historical_file(self, link) -> str:  # TODO which type
+    def historical_file(self, link) -> dict:
         query_filter = {'link': link}
         query_fields = {'_id': 0, 'link': 0}
 

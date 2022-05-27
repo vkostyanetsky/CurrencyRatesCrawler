@@ -58,7 +58,7 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
         currency_rates = []
 
         for link_to_file in links_to_files:
-            self.__process_link_to_file(link_to_file)
+            self.__process_link_to_file(link_to_file, currency_rates)
 
         self._LOGGER.debug("Crawling results: {} rate(s).".format(len(currency_rates)))
         self._LOGGER.debug("Inserting rates into the database...")
@@ -93,7 +93,7 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
         except OSError:
             pass  # TODO needs to be processed
 
-    def __process_link_to_file(self, file_link):
+    def __process_link_to_file(self, file_link, currency_rates):
 
         self._LOGGER.debug("LINK TO PROCESS: {}".format(file_link))
 
@@ -136,7 +136,7 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
 
             return
 
-        # self.load_currency_rates_from_file(link_to_file, currency_rates)
+        self.__load_currency_rates_from_file(file_link, currency_rates)
 
         if historical_file is None:
             self._DB.insert_historical_file(link=file_link, hash=file_hash, import_date=self._CURRENT_DATETIME)
