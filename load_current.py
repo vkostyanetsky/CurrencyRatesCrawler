@@ -17,7 +17,8 @@ from bs4 import BeautifulSoup
 
 
 class CurrentRatesCrawler(modules.crawler.Crawler):
-    __REQUEST_DATE_FORMAT_STRING = "%#d-%#m-%Y" if platform.system() == "Windows" else "%-d-%-m-%Y"
+    _title: str = "Import of current exchanges rates"
+    __REQUEST_DATE_FORMAT_STRING: str = "%#d-%#m-%Y" if platform.system() == "Windows" else "%-d-%-m-%Y"
 
     def __init__(self, file):
 
@@ -120,33 +121,9 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
         return update_date_from_response, currency_rates_from_response, unknown_currencies_from_response
 
-    def get_current_date_presentation(self) -> str:
-
-        return self.get_date_as_string(self._CURRENT_DATE)
-
-    def get_start_message(self) -> str:
-        current_date_presentation = self.get_current_date_presentation()
-
-        return "Regular import is started.".format(current_date_presentation)
-
-    def get_final_message(self, number_of_added_rates) -> str:
-
-        current_date_presentation = self.get_current_date_presentation()
-        import_date_as_string = self.get_import_date_as_string()
-
-        final_message = "Regular import for {} ({}) is done.".format(current_date_presentation, import_date_as_string)
-
-        if number_of_added_rates > 0:
-            final_message_suffix = "Number of added or changed rates: {}.".format(number_of_added_rates)
-        else:
-            final_message_suffix = "No changes found."
-
-        return "{} {}".format(final_message, final_message_suffix)
-
     def run(self):
 
-        self._LOGGER.debug(self.get_start_message())
-        self._LOGGER.debug(self.get_log_message_about_import_date())
+        self._write_import_started_log_event()
 
         number_of_added_rates = 0
         changed_currency_rates = []
@@ -265,7 +242,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
         self._DB.add_import_date(self._CURRENT_DATETIME)
 
-        self._LOGGER.info(self.get_final_message(number_of_added_rates))
+        self._write_import_completed_log_event(number_of_added_rates)
 
         self._DB.disconnect()
 

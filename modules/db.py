@@ -8,6 +8,7 @@ class CrawlerDB:
     __DATABASE: pymongo.database.Database = None
     __CURRENCY_RATES_COLLECTION: pymongo.collection = None
     __IMPORT_DATES_COLLECTION: pymongo.collection = None
+    __FILE_LINKS_COLLECTION: pymongo.collection = None
     __LOGS_COLLECTION: pymongo.collection = None
 
     def __init__(self, config: dict):
@@ -19,6 +20,7 @@ class CrawlerDB:
 
         self.__DATABASE = self.__CLIENT[config['mongodb_database_name']]
 
+        self.__HISTORICAL_FILES_COLLECTION = self.__DATABASE['historical_files']
         self.__CURRENCY_RATES_COLLECTION = self.__DATABASE['currency_rates']
         self.__IMPORT_DATES_COLLECTION = self.__DATABASE['import_dates']
         self.__LOGS_COLLECTION = self.__DATABASE['logs']
@@ -67,6 +69,31 @@ class CrawlerDB:
             logs.append(log['text'])
 
         return logs
+
+    def insert_historical_file(self, link: str, hash: str, import_date: datetime.datetime) -> None:
+        self.__HISTORICAL_FILES_COLLECTION.insert_one({
+            'link': link,
+            'hash': hash,
+            'import_date': import_date,
+        })
+
+    def update_historical_file(self, link: str, hash: str, import_date: datetime.datetime) -> None:
+
+        query_filter = {'link': link}
+        query_values = {
+            "$set": {
+                'hash': hash,
+                'import_date': import_date
+            }
+        }
+
+        self.__HISTORICAL_FILES_COLLECTION.update_one(query_filter, query_values)
+
+    def historical_file(self, link) -> str:  # TODO which type
+        query_filter = {'link': link}
+        query_fields = {'_id': 0, 'link': 0}
+
+        return self.__HISTORICAL_FILES_COLLECTION.find_one(query_filter, query_fields)
 
     def get_currency_rates(
             self,

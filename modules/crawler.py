@@ -20,6 +20,8 @@ class Crawler:
     _LOGGER: Logger
     _DB: modules.db.CrawlerDB
 
+    _title: str = ''
+
     _session_file_name: str = "session.bin"
     _session: requests.sessions.Session
 
@@ -41,7 +43,7 @@ class Crawler:
             self._DB
         )
 
-        self._LOGGER.debug("Initialization completed.")
+        self._LOGGER.debug("Crawler initialized.")
 
     def _load_session(self) -> None:
 
@@ -80,12 +82,6 @@ class Crawler:
 
     def get_import_date_as_string(self) -> str:
         return self._CURRENT_DATETIME.strftime('%Y%m%d%H%M%S')
-
-    def get_log_message_about_import_date(self) -> str:
-        import_date_readable = self._CURRENT_DATETIME.strftime('%Y-%m-%d %H:%M:%S')
-        import_date = self.get_import_date_as_string()
-
-        return "Import date is {} ({}).".format(import_date_readable, import_date)
 
     def get_config_value(self, key: str) -> any:
         return self._CONFIG.get(key)
@@ -295,6 +291,9 @@ class Crawler:
 
         return response
 
+    def get_current_date_presentation(self) -> str:
+        return self.get_date_as_string(self._CURRENT_DATE)
+
     @staticmethod
     def get_beginning_of_this_second() -> datetime.datetime:
 
@@ -316,4 +315,36 @@ class Crawler:
     @staticmethod
     def get_date_as_string(date: datetime.datetime) -> str:
 
-        return date.strftime('%Y-%m-%d')
+        return date.strftime("%Y-%m-%d")
+
+    @staticmethod
+    def get_time_as_string(date: datetime.datetime) -> str:
+
+        return date.strftime("%H:%M:%S")
+
+    def _write_import_started_log_event(self) -> None:
+        time_as_string = self.get_time_as_string(self._CURRENT_DATETIME)
+        import_date_as_string = self.get_import_date_as_string()
+
+        message = "{} started at {} ({}).".format(self._title, time_as_string, import_date_as_string)
+
+        self._LOGGER.debug(message)
+
+    def _write_import_completed_log_event(self, number_of_added_rates) -> None:
+        time_as_string = self.get_time_as_string(self._CURRENT_DATETIME)
+        import_date_as_string = self.get_import_date_as_string()
+
+        final_message = "{} started at {} ({}) is completed.".format(self._title, time_as_string, import_date_as_string)
+
+        if number_of_added_rates > 0:
+            final_message_suffix = "Number of imported rates: {}.".format(number_of_added_rates)
+        else:
+            final_message_suffix = "No changes found."
+
+        message = "{} {}".format(final_message, final_message_suffix)
+
+        self._LOGGER.debug(message)
+
+    @staticmethod
+    def date_with_time_as_string(date_with_time: datetime.datetime) -> str:
+        return date_with_time.strftime('%Y-%m-%d %H:%M:%S')
