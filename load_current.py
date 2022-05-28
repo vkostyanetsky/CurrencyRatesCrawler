@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 
 class CurrentRatesCrawler(modules.crawler.Crawler):
     _title: str = "Import of current exchanges rates"
-    __REQUEST_DATE_FORMAT_STRING: str = "%#d-%#m-%Y" if platform.system() == "Windows" else "%-d-%-m-%Y"
+    __request_date_format_string: str = "%#d-%#m-%Y" if platform.system() == "Windows" else "%-d-%-m-%Y"
 
     def __init__(self, file):
 
@@ -48,7 +48,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
             currency_rates.append({
                 'currency_code': currency_code,
-                'import_date': self._CURRENT_DATETIME,
+                'import_date': self._current_datetime,
                 'rate_date': rate_date,
                 'rate': float(currency_rate_tag.text),
             })
@@ -63,7 +63,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
     @staticmethod
     def get_request_url(request_date: datetime.datetime) -> str:
 
-        request_date_string = request_date.strftime(CurrentRatesCrawler.__REQUEST_DATE_FORMAT_STRING)
+        request_date_string = request_date.strftime(CurrentRatesCrawler.__request_date_format_string)
         url_string = "https://www.centralbank.ae/en/fx-rates-ajax?date={}&v=2".format(request_date_string)
 
         return url_string
@@ -129,21 +129,21 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         changed_currency_rates = []
         historical_currency_rates = []
 
-        minimal_date = self._CURRENT_DATE - datetime.timedelta(
-            days=self._CONFIG['number_of_days_to_check']
+        minimal_date = self._current_date - datetime.timedelta(
+            days=self._config['number_of_days_to_check']
         )
 
-        request_date = self._CURRENT_DATE
+        request_date = self._current_date
 
         while request_date >= minimal_date:
 
-            self._LOGGER.debug(
+            self._logger.debug(
                 "REQUEST DATE: {}".format(self.get_date_as_string(request_date))
             )
 
-            if request_date == self._CURRENT_DATE:
+            if request_date == self._current_date:
 
-                self._LOGGER.debug(
+                self._logger.debug(
                     "HTML to parse: {}".format(self.get_request_url_for_today())
                 )
 
@@ -153,7 +153,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
                 request_url = self.get_request_url(request_date)
 
-                self._LOGGER.debug(
+                self._logger.debug(
                     "JSON to parse: {}".format(request_url)
                 )
 
@@ -163,8 +163,8 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
             if update_date == request_date:
 
-                self._LOGGER.debug("Update date is equal to the request date.")
-                self._LOGGER.debug("Processing obtained rates...")
+                self._logger.debug("Update date is equal to the request date.")
+                self._logger.debug("Processing obtained rates...")
 
                 number_of_historical = 0
                 number_of_changed = 0
@@ -176,11 +176,11 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
                     is_historical = False
                     is_changed = False
 
-                    if not self._DB.is_currency_rate_to_add(currency_rate):
-                        self._LOGGER.debug("{} - skipped (already loaded)".format(rate_presentation))
+                    if not self._db.is_currency_rate_to_add(currency_rate):
+                        self._logger.debug("{} - skipped (already loaded)".format(rate_presentation))
                         continue
 
-                    if currency_rate['rate_date'] < self.get_rate_date(self._CURRENT_DATE):
+                    if currency_rate['rate_date'] < self.get_rate_date(self._current_date):
                         number_of_historical += 1
                         is_historical = True
                         historical_currency_rates.append({
@@ -188,7 +188,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
                             'rate_date': currency_rate['rate_date']
                         })
 
-                    if self._DB.is_currency_rate_to_change(currency_rate):
+                    if self._db.is_currency_rate_to_change(currency_rate):
                         number_of_changed += 1
                         is_changed = True
                         changed_currency_rates.append({
@@ -197,20 +197,20 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
                         })
 
                     number_of_added += 1
-                    self._DB.add_currency_rate(currency_rate)
+                    self._db.add_currency_rate(currency_rate)
 
                     number_of_added_rates += 1
 
-                    self._LOGGER.debug("{} - added".format(rate_presentation))
+                    self._logger.debug("{} - added".format(rate_presentation))
 
-                self._LOGGER.debug("Obtained rates have been processed.")
+                self._logger.debug("Obtained rates have been processed.")
 
                 request_date -= datetime.timedelta(days=1)
 
                 if number_of_added == 0:
-                    self._LOGGER.debug("Rates added: 0")
+                    self._logger.debug("Rates added: 0")
                 else:
-                    self._LOGGER.debug(
+                    self._logger.debug(
                         "Rates added: {} (historical: {}, changed: {}).".format(
                             number_of_added, number_of_historical, number_of_changed
                         )
@@ -218,19 +218,19 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
             else:
 
-                self._LOGGER.debug(
+                self._logger.debug(
                     "Update date ({}) is not equal to the request date.".format(self.get_date_as_string(update_date))
                 )
 
                 if minimal_date <= update_date:
 
-                    self._LOGGER.debug("Switching to the update date.")
+                    self._logger.debug("Switching to the update date.")
 
                     request_date = update_date
 
                 else:
 
-                    self._LOGGER.debug(
+                    self._logger.debug(
                         "Unable to switch to the update date since it is less than the minimal one ({}).".format(
                             minimal_date)
                     )
@@ -240,11 +240,11 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         self.changed_currency_rates_warning(changed_currency_rates)
         self.historical_currency_rates_warning(historical_currency_rates)
 
-        self._DB.add_import_date(self._CURRENT_DATETIME)
+        self._db.add_import_date(self._current_datetime)
 
         self._write_import_completed_log_event(number_of_added_rates)
 
-        self._DB.disconnect()
+        self._db.disconnect()
 
 
 crawler = CurrentRatesCrawler(__file__)

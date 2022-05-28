@@ -36,7 +36,7 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
 
         self._write_import_started_log_event()
 
-        self._LOGGER.debug("Attempting to find links to Excel files...")
+        self._logger.debug("Attempting to find links to Excel files...")
 
         """It seems like a not optimal way to avoid CERTIFICATE_VERIFY_FAILED, but it works. 
 
@@ -53,40 +53,40 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
         links_to_files = self.__get_links_to_files()
         number_of_links = len(links_to_files)
 
-        self._LOGGER.debug("Search results: {} link(s).".format(number_of_links))
+        self._logger.debug("Search results: {} link(s).".format(number_of_links))
 
         currency_rates = []
 
         for link_to_file in links_to_files:
             self.__process_link_to_file(link_to_file, currency_rates)
 
-        self._LOGGER.debug("Crawling results: {} rate(s).".format(len(currency_rates)))
-        self._LOGGER.debug("Inserting rates into the database...")
+        self._logger.debug("Crawling results: {} rate(s).".format(len(currency_rates)))
+        self._logger.debug("Inserting rates into the database...")
 
         changed_currency_rates = []
 
         for currency_rate in currency_rates:
 
-            if not self._DB.is_currency_rate_to_add(currency_rate):
+            if not self._db.is_currency_rate_to_add(currency_rate):
                 continue
 
-            if self._DB.is_currency_rate_to_change(currency_rate):
+            if self._db.is_currency_rate_to_change(currency_rate):
                 changed_currency_rates.append({
                     'currency_code': currency_rate['currency_code'],
                     'rate_date': currency_rate['rate_date']
                 })
 
-            self._DB.add_currency_rate(currency_rate)
+            self._db.add_currency_rate(currency_rate)
 
         self.changed_currency_rates_warning(changed_currency_rates)
 
         self._write_import_completed_log_event(0)
 
-        self._DB.disconnect()
+        self._db.disconnect()
 
     def __init_historical_files_directory(self) -> None:
 
-        self.__historical_files_directory = os.path.join(self._CURRENT_DIRECTORY, "history")
+        self.__historical_files_directory = os.path.join(self._current_directory, "history")
 
         try:
             os.makedirs(self.__historical_files_directory, exist_ok=True)
@@ -95,25 +95,25 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
 
     def __process_link_to_file(self, file_link, currency_rates):
 
-        self._LOGGER.debug("LINK TO PROCESS: {}".format(file_link))
+        self._logger.debug("LINK TO PROCESS: {}".format(file_link))
 
         file_path = self.__file_path_in_historical_files_directory(file_link)
         file_hash = self.__file_hash(file_path)
 
-        self._LOGGER.debug("Downloaded file hash: {}".format(file_hash))
+        self._logger.debug("Downloaded file hash: {}".format(file_hash))
 
-        historical_file = self._DB.historical_file(file_link)
+        historical_file = self._db.historical_file(file_link)
 
         if historical_file is None:
 
-            self._LOGGER.debug(
+            self._logger.debug(
                 "The file hasn't been processed before "
                 "(unable to find a previous file hash in the database)."
             )
 
         elif historical_file['hash'] != file_hash:
 
-            self._LOGGER.debug(
+            self._logger.debug(
                 "The file has been updated "
                 "since the last processing ({}), "
                 "because previous file hash ({}) "
@@ -125,7 +125,7 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
 
         else:
 
-            self._LOGGER.debug(
+            self._logger.debug(
                 "The file hasn't been updated "
                 "since the last processing ({}), "
                 "because a previous file hash "
@@ -139,9 +139,9 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
         self.__load_currency_rates_from_file(file_link, currency_rates)
 
         if historical_file is None:
-            self._DB.insert_historical_file(link=file_link, hash=file_hash, import_date=self._CURRENT_DATETIME)
+            self._db.insert_historical_file(link=file_link, hash=file_hash, import_date=self._current_datetime)
         else:
-            self._DB.update_historical_file(link=file_link, hash=file_hash, import_date=self._CURRENT_DATETIME)
+            self._db.update_historical_file(link=file_link, hash=file_hash, import_date=self._current_datetime)
 
     def __get_links_to_files(self) -> list:
 
@@ -193,7 +193,7 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
 
             currency_rates.append({
                 "currency_code": currency_code,
-                "import_date": self._CURRENT_DATETIME,
+                "import_date": self._current_datetime,
                 "rate_date": rate_date,
                 "rate": float(rate_column[index]),
             })

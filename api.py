@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import datetime
 import modules.crawler
 
@@ -43,7 +45,7 @@ class CrawlerHTTPService(modules.crawler.Crawler):
         return data, 200
 
     def get_currency_codes(self) -> list:
-        return list(self._CONFIG['currency_codes'].values())
+        return list(self._config['currency_codes'].values())
 
     def get_currency_rates(
             self,
@@ -68,7 +70,7 @@ class CrawlerHTTPService(modules.crawler.Crawler):
 
             import_dates = []
 
-            rates = self._DB.get_currency_rates(currency_code, import_date, start_date, end_date)
+            rates = self._db.get_currency_rates(currency_code, import_date, start_date, end_date)
 
             for rate in rates:
                 import_dates.append(rate['import_date'])
@@ -91,7 +93,7 @@ class CrawlerHTTPService(modules.crawler.Crawler):
     def get_logs(self, import_date: datetime.datetime):
 
         data = {
-            "logs": self._DB.get_logs(import_date)
+            "logs": self._db.get_logs(import_date)
         }
 
         return data, 200
