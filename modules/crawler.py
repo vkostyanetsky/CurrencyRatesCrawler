@@ -22,8 +22,8 @@ class Crawler:
 
     _title: str = ''
 
-    _session_file_name: str = "session.bin"
-    _session: requests.sessions.Session
+    _session_file_path: str = ""  # TODO Probably private?
+    _session: requests.sessions.Session  # TODO Probably private?
 
     def __init__(self, file):
 
@@ -51,7 +51,9 @@ class Crawler:
 
         try:
 
-            with open(self._session_file_name, 'rb') as file:
+            self._session_file_path = os.path.join(self._CURRENT_DIRECTORY, "session.bin")
+
+            with open(self._session_file_path, 'rb') as file:
                 self._session.cookies.update(pickle.load(file))
 
             for cookie in self._session.cookies:
@@ -60,24 +62,24 @@ class Crawler:
         except FileNotFoundError:
 
             self._LOGGER.warning(
-                f"The session dump file ({self._session_file_name}) is not found."
+                f"The session dump file ({self._session_file_path}) is not found."
             )
 
         except OSError:
 
             self._LOGGER.warning(
-                f"OS error occurred trying to open session dump file ({self._session_file_name})."
+                f"OS error occurred trying to open session dump file ({self._session_file_path})."
             )
 
         except Exception as exception:
 
             self._LOGGER.warning(
-                f"Unexpected error opening session dump file ({self._session_file_name}): ", repr(exception)
+                f"Unexpected error opening session dump file ({self._session_file_path}): ", repr(exception)
             )
 
     def _save_session(self) -> None:
 
-        with open(self._session_file_name, 'wb') as file:
+        with open(self._session_file_path, 'wb') as file:
             pickle.dump(self._session.cookies, file)
 
     def get_import_date_as_string(self) -> str:
