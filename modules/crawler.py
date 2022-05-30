@@ -61,14 +61,14 @@ class Crawler:
 
         for currency_rate_to_import in currency_rates_to_import:
 
-            rate_presentation = "- {} {} = {}".format(
+            rate_presentation = "{} on {} is {}".format(
                 currency_rate_to_import["currency_code"],
                 datetime.datetime.strftime(currency_rate_to_import["rate_date"], "%d-%m-%Y"),
                 self.rate_value_presentation(currency_rate_to_import["rate"])
             )
 
             if not self._db.rate_is_new_or_changed(currency_rate_to_import):
-                self._logger.debug("{} - skipped (already imported)".format(rate_presentation))
+                self._logger.debug("{}: skipped (already imported)".format(rate_presentation))
                 continue
 
             currency_rate_on_date = self._db.currency_rate_on_date(
@@ -82,7 +82,7 @@ class Crawler:
             changed_rates.append((currency_rate_on_date, currency_rate_to_import))
 
             self._db.insert_currency_rate(currency_rate_to_import)
-            self._logger.debug("{} - imported".format(rate_presentation))
+            self._logger.debug("{}: imported".format(rate_presentation))
 
         self._logger.debug("Obtained rates have been processed.")
 
