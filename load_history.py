@@ -34,7 +34,7 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
 
     def run(self):
 
-        self._write_import_started_log_event()
+        self._write_log_event_import_started()
 
         self._logger.debug("Attempting to find links to Excel files...")
 
@@ -55,32 +55,24 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
 
         self._logger.debug("Search results: {} link(s).".format(number_of_links))
 
-        currency_rates = []
+        total_number_of_changed_rates = 0
+        total_number_of_retroactive_rates = 0
 
         for link_to_file in links_to_files:
-            self.__process_link_to_file(link_to_file, currency_rates)
 
-        self._logger.debug("Crawling results: {} rate(s).".format(len(currency_rates)))
-        self._logger.debug("Inserting rates into the database...")
+            currency_rates = self.__currency_rates_from_file(link_to_file)
+            self._logger.debug("Crawling results: {} rate(s).".format(len(currency_rates)))
 
-        changed_currency_rates = []
+            number_of_changed_rates, number_of_retroactive_rates = self._process_currency_rates_to_import(
+                currency_rates
+            )
 
-        for currency_rate in currency_rates:
+            total_number_of_changed_rates += number_of_changed_rates
+            total_number_of_retroactive_rates += number_of_retroactive_rates
 
-            if not self._db.is_currency_rate_to_add(currency_rate):
-                continue
+        self._db.insert_import_date(self._current_datetime)
 
-            if self._db.is_currency_rate_to_change(currency_rate):
-                changed_currency_rates.append({
-                    'currency_code': currency_rate['currency_code'],
-                    'rate_date': currency_rate['rate_date']
-                })
-
-            self._db.add_currency_rate(currency_rate)
-
-        self.changed_currency_rates_warning(changed_currency_rates)
-
-        self._write_import_completed_log_event(0)
+        self._write_log_event_import_completed(total_number_of_changed_rates, total_number_of_retroactive_rates)
 
         self._db.disconnect()
 
@@ -93,7 +85,9 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
         except OSError:
             pass  # TODO needs to be processed
 
-    def __process_link_to_file(self, file_link, currency_rates):
+    def __currency_rates_from_file(self, file_link: str) -> list:
+
+        currency_rates = []
 
         self._logger.debug("LINK TO PROCESS: {}".format(file_link))
 
@@ -104,12 +98,16 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
 
         historical_file = self._db.historical_file(file_link)
 
+        load = False
+
         if historical_file is None:
 
             self._logger.debug(
                 "The file hasn't been processed before "
                 "(unable to find a previous file hash in the database)."
             )
+
+            load = True
 
         elif historical_file['hash'] != file_hash:
 
@@ -123,6 +121,8 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
                 )
             )
 
+            load = True
+
         else:
 
             self._logger.debug(
@@ -134,14 +134,16 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
                 )
             )
 
-            return
+        if load:
 
-        self.__load_currency_rates_from_file(file_link, currency_rates)
+            self.__load_currency_rates_from_file(file_link, currency_rates)
 
-        if historical_file is None:
-            self._db.insert_historical_file(link=file_link, hash=file_hash, import_date=self._current_datetime)
-        else:
-            self._db.update_historical_file(link=file_link, hash=file_hash, import_date=self._current_datetime)
+            if historical_file is None:
+                self._db.insert_historical_file(file_link, file_hash, import_date=self._current_datetime)
+            else:
+                self._db.update_historical_file(file_link, file_hash, import_date=self._current_datetime)
+
+        return currency_rates
 
     def __get_links_to_files(self) -> list:
 

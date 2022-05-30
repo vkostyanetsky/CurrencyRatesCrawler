@@ -118,11 +118,10 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
     def run(self):
 
-        self._write_import_started_log_event()
+        self._write_log_event_import_started()
 
-        number_of_added_rates = 0
-        changed_currency_rates = []
-        historical_currency_rates = []
+        total_number_of_changed_rates = 0
+        total_number_of_retroactive_rates = 0
 
         minimal_date = self._current_date - datetime.timedelta(
             days=self._config['number_of_days_to_check']
@@ -159,57 +158,15 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
             if update_date == request_date:
 
                 self._logger.debug("Update date is equal to the request date.")
-                self._logger.debug("Processing obtained rates...")
 
-                number_of_historical = 0
-                number_of_changed = 0
-                number_of_added = 0
+                number_of_changed_rates, number_of_retroactive_rates = self._process_currency_rates_to_import(
+                    currency_rates
+                )
 
-                for currency_rate in currency_rates:
-
-                    rate_presentation = "- {} {} = {}".format(currency_rate['currency_code'], datetime.datetime.strftime(currency_rate['rate_date'], '%d-%m-%Y'), format(currency_rate['rate'], '.6f'))
-                    is_historical = False
-                    is_changed = False
-
-                    if not self._db.is_currency_rate_to_add(currency_rate):
-                        self._logger.debug("{} - skipped (already loaded)".format(rate_presentation))
-                        continue
-
-                    if currency_rate['rate_date'] < self.get_rate_date(self._current_date):
-                        number_of_historical += 1
-                        is_historical = True
-                        historical_currency_rates.append({
-                            'currency_code': currency_rate['currency_code'],
-                            'rate_date': currency_rate['rate_date']
-                        })
-
-                    if self._db.is_currency_rate_to_change(currency_rate):
-                        number_of_changed += 1
-                        is_changed = True
-                        changed_currency_rates.append({
-                            'currency_code': currency_rate['currency_code'],
-                            'rate_date': currency_rate['rate_date']
-                        })
-
-                    number_of_added += 1
-                    self._db.add_currency_rate(currency_rate)
-
-                    number_of_added_rates += 1
-
-                    self._logger.debug("{} - added".format(rate_presentation))
-
-                self._logger.debug("Obtained rates have been processed.")
+                total_number_of_changed_rates += number_of_changed_rates
+                total_number_of_retroactive_rates += number_of_retroactive_rates
 
                 request_date -= datetime.timedelta(days=1)
-
-                if number_of_added == 0:
-                    self._logger.debug("Rates added: 0")
-                else:
-                    self._logger.debug(
-                        "Rates added: {} (historical: {}, changed: {}).".format(
-                            number_of_added, number_of_historical, number_of_changed
-                        )
-                    )
 
             else:
 
@@ -232,12 +189,9 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
                     break
 
-        self.changed_currency_rates_warning(changed_currency_rates)
-        self.historical_currency_rates_warning(historical_currency_rates)
+        self._db.insert_import_date(self._current_datetime)
 
-        self._db.add_import_date(self._current_datetime)
-
-        self._write_import_completed_log_event(number_of_added_rates)
+        self._write_log_event_import_completed(total_number_of_changed_rates, total_number_of_retroactive_rates)
 
         self._db.disconnect()
 

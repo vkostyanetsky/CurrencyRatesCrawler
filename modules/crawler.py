@@ -7,6 +7,8 @@ import requests
 import modules.db
 import modules.logger
 
+from itertools import groupby
+
 from logging import Logger
 from requests import Response
 from requests.structures import CaseInsensitiveDict
@@ -45,6 +47,69 @@ class Crawler:
         )
 
         self._logger.debug("Crawler initialized.")
+
+    @staticmethod
+    def rate_value_presentation(value: float):
+        return format(value, ".6f")
+
+    def _process_currency_rates_to_import(self, currency_rates_to_import: list) -> tuple:
+
+        self._logger.debug("Process obtained rates...")
+
+        retroactive_rates = []
+        changed_rates = []
+
+        for currency_rate_to_import in currency_rates_to_import:
+
+            rate_presentation = "- {} {} = {}".format(
+                currency_rate_to_import["currency_code"],
+                datetime.datetime.strftime(currency_rate_to_import["rate_date"], "%d-%m-%Y"),
+                self.rate_value_presentation(currency_rate_to_import["rate"])
+            )
+
+            if not self._db.rate_is_new_or_changed(currency_rate_to_import):
+                self._logger.debug("{} - skipped (already imported)".format(rate_presentation))
+                continue
+
+            currency_rate_on_date = self._db.currency_rate_on_date(
+                currency_rate_to_import['currency_code'],
+                currency_rate_to_import['rate_date']
+            )
+
+            if currency_rate_to_import['rate_date'] < self.get_rate_date(self._current_date):
+                retroactive_rates.append((currency_rate_on_date, currency_rate_to_import))
+
+            changed_rates.append((currency_rate_on_date, currency_rate_to_import))
+
+            self._db.insert_currency_rate(currency_rate_to_import)
+            self._logger.debug("{} - imported".format(rate_presentation))
+
+        self._logger.debug("Obtained rates have been processed.")
+
+        self._logger.debug(
+            self.__description_of_rates_changed(
+                len(changed_rates), len(retroactive_rates)
+            )
+        )
+
+        self.__write_log_event_currency_rates_change_description("changed rates", changed_rates)
+        self.__write_log_event_currency_rates_change_description("retroactive rates", retroactive_rates)
+
+        return len(changed_rates), len(retroactive_rates)
+
+    @staticmethod
+    def __description_of_rates_changed(number_of_changed_rates: int, number_of_retroactive_rates: int) -> str:
+        description = ""
+
+        if number_of_changed_rates > 0:
+            description = "Rates changed: {} (retroactively: {})".format(
+                number_of_changed_rates,
+                number_of_retroactive_rates
+            )
+        else:
+            description = "No changes found."
+
+        return description
 
     def _load_session(self) -> None:
 
@@ -229,46 +294,6 @@ class Crawler:
                 "Unknown currencies have been skipped: {}".format(currencies_string)
             )
 
-    def changed_currency_rates_warning(self, changed_currency_rates):
-
-        if len(changed_currency_rates) > 0:
-
-            details = []
-
-            for rate in changed_currency_rates:
-                details.append(
-                    "{} on {}".format(
-                        rate['currency_code'],
-                        self.get_date_as_string(rate['rate_date'])
-                    )
-                )
-
-            details = ", ".join(details)
-
-            self._logger.warning(
-                "Changed currency rates have been detected: {}".format(details)
-            )
-
-    def historical_currency_rates_warning(self, historical_currency_rates):
-
-        if len(historical_currency_rates) > 0:
-
-            details = []
-
-            for rate in historical_currency_rates:
-                details.append(
-                    "{} on {}".format(
-                        rate['currency_code'],
-                        self.get_date_as_string(rate['rate_date'])
-                    )
-                )
-
-            details = ", ".join(details)
-
-            self._logger.warning(
-                "Historical currency rates have been added: {}".format(details)
-            )
-
     def get_response_for_request(self, request_url: str) -> Response:
 
         def get_request_headers() -> CaseInsensitiveDict:
@@ -325,7 +350,7 @@ class Crawler:
 
         return date.strftime("%H:%M:%S")
 
-    def _write_import_started_log_event(self) -> None:
+    def _write_log_event_import_started(self) -> None:
         time_as_string = self.get_time_as_string(self._current_datetime)
         import_date_as_string = self.get_import_date_as_string()
 
@@ -333,20 +358,37 @@ class Crawler:
 
         self._logger.debug(message)
 
-    def _write_import_completed_log_event(self, number_of_added_rates) -> None:
-        time_as_string = self.get_time_as_string(self._current_datetime)
-        import_date_as_string = self.get_import_date_as_string()
+    def _write_log_event_import_completed(self, number_of_changed_rates, number_of_retroactive_rates) -> None:
+        self._logger.info("{} started at {} ({}) is completed. {}".format(
+            self._title,
+            self.get_time_as_string(self._current_datetime),
+            self.get_import_date_as_string(),
+            self.__description_of_rates_changed(number_of_changed_rates, number_of_retroactive_rates)
+        ))
 
-        final_message = "{} started at {} ({}) is completed.".format(self._title, time_as_string, import_date_as_string)
+    def __write_log_event_currency_rates_change_description(self, title: str, rates: list) -> None:
 
-        if number_of_added_rates > 0:
-            final_message_suffix = "Number of imported rates: {}.".format(number_of_added_rates)
-        else:
-            final_message_suffix = "No changes found."
+        if len(rates) == 0:
+            return
 
-        message = "{} {}".format(final_message, final_message_suffix)
+        for group in groupby(sorted(rates, key=lambda x: x[0]['rate_date']), key=lambda x: x[0]['rate_date']):
+            presentations = []
 
-        self._logger.debug(message)
+            for group_item in group[1]:
+                presentation = "{} ({} → {})".format(
+                    group_item[0]['currency_code'],
+                    self.rate_value_presentation(group_item[0]['rate']),
+                    self.rate_value_presentation(group_item[1]['rate']),
+                )
+                presentations.append(presentation)
+
+            self._logger.warning(
+                "Summary of {} on {}: {}".format(
+                    title,
+                    self.get_date_as_string(group[0]),
+                    ", ".join(presentations)
+                )
+            )
 
     @staticmethod
     def date_with_time_as_string(date_with_time: datetime.datetime) -> str:

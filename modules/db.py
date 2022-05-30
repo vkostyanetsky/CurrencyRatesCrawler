@@ -167,16 +167,20 @@ class CrawlerDB:
 
         return rates
 
-    def is_currency_rate_to_change(self, rate: dict) -> bool:
+    def currency_rate_on_date(self, currency_code: str, date: datetime.datetime) -> dict:
+        rates = self.get_currency_rates(currency_code, import_date=None, start_date=date, end_date=date)
 
-        current_rates = self.get_currency_rates(
-            rate['currency_code'], import_date=None, start_date=rate['rate_date'], end_date=rate['rate_date']
-        )
-        rate_for_date = current_rates[0]['rate'] if len(current_rates) > 0 else 0
+        if len(rates) == 0:
+            return {
+                'currency_code': currency_code,
+                'import_date': None,
+                'rate_date': date,
+                'rate': 0
+            }
+        else:
+            return rates[0]
 
-        return rate_for_date != rate['rate']
-
-    def is_currency_rate_to_add(self, rate: dict) -> bool:
+    def rate_is_new_or_changed(self, rate: dict) -> bool:
 
         query = {
             '$and': [
@@ -187,7 +191,7 @@ class CrawlerDB:
 
         return self.__CURRENCY_RATES_COLLECTION.count_documents(query) == 0
 
-    def add_currency_rate(self, rate):
+    def insert_currency_rate(self, rate):
         self.__CURRENCY_RATES_COLLECTION.insert_one(rate)
 
     def add_logs_entry(self, import_date, timestamp, text):
@@ -197,5 +201,5 @@ class CrawlerDB:
             'text': text
         })
 
-    def add_import_date(self, date):
+    def insert_import_date(self, date):
         self.__IMPORT_DATES_COLLECTION.insert_one({'date': date})
