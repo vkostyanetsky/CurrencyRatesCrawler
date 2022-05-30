@@ -148,7 +148,7 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
         def is_link_to_excel_file(href):
             return href and re.compile("/sites/.*[a-z0-9]\\.xlsx").search(href)
 
-        response = self.get_response_for_request("https://www.centralbank.ae/en/fx-rates")
+        response = self.get_response_for_request(self._user_interface_url)
 
         page = BeautifulSoup(response.text, features="html.parser")
         tags = page.find_all("a", href=is_link_to_excel_file)

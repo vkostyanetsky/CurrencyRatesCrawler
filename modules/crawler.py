@@ -21,6 +21,7 @@ class Crawler:
     _db: modules.db.CrawlerDB
 
     _title: str = ''
+    _user_interface_url: str = "https://www.centralbank.ae/en/fx-rates"
 
     __session_file_path: str = ""
     __session: requests.sessions.Session = None

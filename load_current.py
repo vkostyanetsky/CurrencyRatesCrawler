@@ -56,11 +56,6 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         return currency_rates, unknown_currencies
 
     @staticmethod
-    def get_request_url_for_today():
-
-        return "https://www.centralbank.ae/en/fx-rates"
-
-    @staticmethod
     def get_request_url(request_date: datetime.datetime) -> str:
 
         request_date_string = request_date.strftime(CurrentRatesCrawler.__request_date_format_string)
@@ -70,7 +65,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
     def get_data_from_bank_for_today(self):
 
-        response = self.get_response_for_request(self.get_request_url_for_today())
+        response = self.get_response_for_request(self._user_interface_url)
 
         if response.status_code != 200:
             raise Exception
@@ -144,7 +139,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
             if request_date == self._current_date:
 
                 self._logger.debug(
-                    "HTML to parse: {}".format(self.get_request_url_for_today())
+                    "HTML to parse: {}".format(self._user_interface_url)
                 )
 
                 update_date, currency_rates, unknown_currencies = self.get_data_from_bank_for_today()
