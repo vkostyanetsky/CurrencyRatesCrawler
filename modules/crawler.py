@@ -1,7 +1,6 @@
 import os
 import time
 import yaml
-import pickle
 import datetime
 import requests
 import modules.db
@@ -25,8 +24,7 @@ class Crawler:
     _title: str = ''
     _user_interface_url: str = "https://www.centralbank.ae/en/fx-rates"
 
-    __session_file_path: str = ""
-    __session: requests.sessions.Session = None
+    _session: requests.sessions.Session = requests.session()
 
     def __init__(self, file):
 
@@ -99,8 +97,6 @@ class Crawler:
 
     @staticmethod
     def __description_of_rates_changed(number_of_changed_rates: int, number_of_retroactive_rates: int) -> str:
-        description = ""
-
         if number_of_changed_rates > 0:
             description = "Rates changed: {} (retroactively: {})".format(
                 number_of_changed_rates,
@@ -110,43 +106,6 @@ class Crawler:
             description = "No changes found."
 
         return description
-
-    def _load_session(self) -> None:
-
-        self.__session = requests.session()
-
-        try:
-
-            self.__session_file_path = os.path.join(self._current_directory, "session.bin")
-
-            with open(self.__session_file_path, 'rb') as file:
-                self.__session.cookies.update(pickle.load(file))
-
-            for cookie in self.__session.cookies:
-                self._logger.debug("Cookie restored: " + cookie.name + " = " + cookie.value)
-
-        except FileNotFoundError:
-
-            self._logger.warning(
-                f"The session dump file ({self.__session_file_path}) is not found."
-            )
-
-        except OSError:
-
-            self._logger.warning(
-                f"OS error occurred trying to open session dump file ({self.__session_file_path})."
-            )
-
-        except Exception as exception:
-
-            self._logger.warning(
-                f"Unexpected error opening session dump file ({self.__session_file_path}): ", repr(exception)
-            )
-
-    def _save_session(self) -> None:
-
-        with open(self.__session_file_path, 'wb') as file:
-            pickle.dump(self.__session.cookies, file)
 
     def get_import_date_as_string(self) -> str:
         return self._current_datetime.strftime('%Y%m%d%H%M%S')
@@ -319,19 +278,11 @@ class Crawler:
 
         request_headers = get_request_headers()
 
-        response = self.__session.get(request_url, headers=request_headers)
-
-        self._save_session()
+        response = self._session.get(request_url, headers=request_headers)
 
         self._logger.debug(
             "Response received. Status code: {}, text:\n{}".format(response.status_code, response.text)
         )
-
-        for cookie in response.cookies:
-            self.__session.cookies.set_cookie(cookie)
-            self._logger.debug(
-                "Cookie received: {} = {}".format(cookie.name, cookie.value)
-            )
 
         return response
 
@@ -392,7 +343,7 @@ class Crawler:
 
             for group_item in group[1]:
                 presentation = "{} ({} → {})".format(
-                    group_item[0]['currency_code'],
+                    group_item[1]['currency_code'],
                     self.rate_value_presentation(group_item[0]['rate']),
                     self.rate_value_presentation(group_item[1]['rate']),
                 )

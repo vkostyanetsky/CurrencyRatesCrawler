@@ -11,6 +11,7 @@ in the same directory.
 import time
 import datetime
 import platform
+import requests
 import modules.crawler
 
 from bs4 import BeautifulSoup
@@ -18,13 +19,12 @@ from bs4 import BeautifulSoup
 
 class CurrentRatesCrawler(modules.crawler.Crawler):
     _title: str = "Import of current exchanges rates"
+    __big_ip_cookie_name: str = "BIGipServer~CEN-BANK~Pool-Web-Prod"
     __request_date_format_string: str = "%#d-%#m-%Y" if platform.system() == "Windows" else "%-d-%-m-%Y"
 
     def __init__(self, file):
 
         super().__init__(file)
-
-        self._load_session()
 
     def get_rates_from_soup(self, soup: BeautifulSoup, rate_date: datetime.datetime) -> tuple:
 
@@ -63,12 +63,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
         return url_string
 
-    def get_data_from_bank_for_today(self):
-
-        response = self.get_response_for_request(self._user_interface_url)
-
-        if response.status_code != 200:
-            raise Exception
+    def get_update_date_and_currency_rates_from_soup(self, response):
 
         soup = BeautifulSoup(response.text, features="html.parser")
 
@@ -80,9 +75,84 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         except Exception:
             raise Exception
 
-        currency_rates, unknown_currencies = self.get_rates_from_soup(soup, update_date)
+        currency_rates, unknown_currencies = self.get_rates_from_soup(soup, self.get_rate_date(update_date))
 
         return update_date, currency_rates, unknown_currencies
+
+    def set_big_ip_cookie(self, cookie_value):
+
+        self._logger.debug(
+            "Cookie is set: {} = {}".format(self.__big_ip_cookie_name, cookie_value)
+        )
+
+        self._session.cookies.set(
+            name=self.__big_ip_cookie_name,
+            value=cookie_value,
+            domain="www.centralbank.ae",
+            path="/"
+        )
+
+    def get_data_from_bank_for_today_with_big_ip_list(self):
+
+        self._logger.debug("The list of values for the Big-IP cookie is provided.")
+        self._logger.debug("Finding the most relevant value for the Big-IP cookie...")
+
+        results_for_cookie_values = {}
+
+        for cookie_value in self._config['big_ip_cookies']:
+
+            self._logger.debug("Checking a Big-IP cookie: {}".format(cookie_value))
+
+            self.set_big_ip_cookie(cookie_value)
+
+            response = self.get_response_for_request(self._user_interface_url)
+
+            for cookie in response.cookies:
+
+                if cookie.name == self.__big_ip_cookie_name:
+                    continue
+
+                self._session.cookies.set_cookie(cookie)
+                self._logger.debug(
+                    "Cookie is set: {} = {}".format(cookie.name, cookie.value)
+                )
+
+            results_for_cookie_values[cookie_value] = self.get_update_date_and_currency_rates_from_soup(response)
+
+        cookie_value = sorted(results_for_cookie_values, key=lambda data_item: data_item[0])[0]
+        cookie_value_update_date = results_for_cookie_values[cookie_value][0]
+
+        self._logger.debug("The most relevant value for the Big-IP cookie is {} (update date is {}).".format(
+            cookie_value, cookie_value_update_date
+        ))
+
+        self.set_big_ip_cookie(cookie_value)
+
+        return results_for_cookie_values[cookie_value]
+
+    def get_data_from_bank_for_today_naturally(self):
+
+        self._logger.debug("The list of values for the Big-IP cookie is not provided.")
+
+        response = self.get_response_for_request(self._user_interface_url)
+
+        if response.status_code != 200:
+            raise Exception
+
+        for cookie in response.cookies:
+            self._session.cookies.set_cookie(cookie)
+            self._logger.debug(
+                "Cookie is set: {} = {}".format(cookie.name, cookie.value)
+            )
+
+        return self.get_update_date_and_currency_rates_from_soup(response)
+
+    def get_data_from_bank_for_today(self):
+
+        if len(self._config['big_ip_cookies']) > 0:
+            return self.get_data_from_bank_for_today_with_big_ip_list()
+        else:
+            return self.get_data_from_bank_for_today_naturally()
 
     def get_data_from_bank(self, request_url) -> tuple:
 

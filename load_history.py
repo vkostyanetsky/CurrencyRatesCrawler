@@ -28,8 +28,6 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
 
         super().__init__(file)
 
-        self._load_session()
-
         self.__init_historical_files_directory()
 
     def run(self):
