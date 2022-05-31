@@ -317,6 +317,12 @@ class Crawler:
             "Response received. Status code: {}, text:\n{}".format(response.status_code, response.text)
         )
 
+        for cookie in response.cookies:
+            self.__session.cookies.set_cookie(cookie)
+            self._logger.debug(
+                "Cookie received: {} = {}".format(cookie.name, cookie.value)
+            )
+
         return response
 
     def get_current_date_presentation(self) -> str:
