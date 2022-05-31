@@ -234,6 +234,14 @@ class Crawler:
             if value is None or type(value) != str:
                 config[key] = ''
 
+        def process_parameter_big_ip_cookies():
+
+            key = 'big_ip_cookies'
+            value = config.get(key)
+
+            if value is None or type(value) != list:
+                config[key] = []
+
         def process_parameter_currency_codes():
 
             key = 'currency_codes'
@@ -259,6 +267,8 @@ class Crawler:
         process_parameter_telegram_chat_id()
 
         process_parameter_api_endpoint_to_get_logs()
+
+        process_parameter_big_ip_cookies()
 
         process_parameter_currency_codes()
 

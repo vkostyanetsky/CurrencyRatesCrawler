@@ -44,11 +44,37 @@ telegram_chat_id:       0
 #
 api_endpoint_to_get_logs: ""
 
+# A list of values for a cookie “BIGipServer~CEN-BANK~Pool-Web-Prod” of the bank website. The crawler will use
+# one of them while sending requests, instead of value which it can get from a server response.
+#
+# What's the deal? Well, usually, a Big-IP cookie contains a server address and a port number, both are encoded.
+# It is a part of a load balancing system of a website, and here it is intended to make the bank website
+# more stable as well. To simplify, a server which is encoded in a cookie value will be used
+# to get content requested by a user.
+#
+# Normally, when you send a request to the bank website, it specifies a value of this cookie. Why do you need
+# a changeable setting instead of it, do you ask? Well, the answer is that it definitely has a sync issue
+# between balancing servers. From time to time, I am observing a situation when a server that is set
+# by the cookie responding with outdated data (for instance, currency rates updated Oct-31,
+# but the server said they updated Oct-27).
+#
+# I have collected two possible values only for this cookie (which should be considered as two servers,
+# as far as I understand) and listed them below as default setting. Having these, the crawler will try to get
+# which server has the more actual data by checking update date. The winner will be picked up
+# for the current session.
+#
+# I suppose, when the time comes, the bank will resolve the sync problem between servers, and this patch
+# will become useless. Then you can delete the list, and the crawler will get a value of the cookie naturally,
+# from a response of the server, as it should.
+#
+big_ip_cookies:
+  - "rd37o00000000000000000000ffff0a009242o443"
+  - "rd37o00000000000000000000ffff0a009243o443"
+
 # Country Currency Codes. Scripts use this list to convert a presentation of a currency
 # to its code, accordingly to ISO 4217 (https://en.wikipedia.org/wiki/ISO_4217).
 #
 currency_codes:
-
   "New Zealand Dollar":       NZD
   "US Dollar":                USD
   "Argentine Peso":           ARS
