@@ -210,6 +210,7 @@ class LogsUsingImportDate(Resource):
 
         return crawler.get_logs(import_date)
 
+
 crawler = CrawlerHTTPService(__file__)
 
 app = Flask(__name__)
