@@ -105,6 +105,14 @@ class Hello(Resource):
         return crawler.get_error_response(code=1, message='No action specified.')
 
 
+class Info(Resource):
+    @staticmethod
+    def get():
+        return {
+            "version": "1.0.0"
+        }, 200
+
+
 class Currencies(Resource):
 
     @staticmethod
@@ -210,6 +218,10 @@ api = Api(app)
 api.add_resource(
     Hello,
     "/"
+)
+api.add_resource(
+    Info,
+    "/info/"
 )
 api.add_resource(
     Currencies,
