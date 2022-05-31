@@ -6,9 +6,9 @@ import datetime
 class CrawlerDB:
     __CLIENT: pymongo.MongoClient = None
     __DATABASE: pymongo.database.Database = None
+    __HISTORICAL_FILES_COLLECTION: pymongo.collection = None
     __CURRENCY_RATES_COLLECTION: pymongo.collection = None
     __IMPORT_DATES_COLLECTION: pymongo.collection = None
-    __FILE_LINKS_COLLECTION: pymongo.collection = None
     __LOGS_COLLECTION: pymongo.collection = None
 
     def __init__(self, config: dict):
