@@ -185,6 +185,13 @@ class Crawler:
             if config.get(key) is None:
                 config[key] = 0
 
+        def process_parameter_user_agent():
+
+            key = 'user_agent'
+
+            if config.get(key) is None:
+                config[key] = ''
+
         def process_parameter_api_endpoint_to_get_logs():
 
             key = 'api_endpoint_to_get_logs'
@@ -224,6 +231,8 @@ class Crawler:
 
         process_parameter_telegram_bot_api_token()
         process_parameter_telegram_chat_id()
+
+        process_parameter_user_agent()
 
         process_parameter_api_endpoint_to_get_logs()
 
@@ -270,7 +279,9 @@ class Crawler:
             headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
             headers['Pragma'] = 'no-cache'
             headers['Expires'] = '0'
-            headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0' # TODO
+
+            if self._config['user_agent'] != '':
+                headers['User-Agent'] = self._config['user_agent']
 
             return headers
 
