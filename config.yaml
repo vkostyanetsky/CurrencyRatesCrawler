@@ -35,6 +35,10 @@ mongodb_max_delay:          5
 telegram_bot_api_token: ""
 telegram_chat_id:       0
 
+# A value of the User-Agent HTTP header that crawler will be used making requests to the bank website.
+#
+user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0"
+
 # A name of an API endpoint allows a user to get logs by import date.
 # Please consider making this one hard to pick up (good example
 # of the name: "logs-ueqqp7oemvsqrorx27e2").
