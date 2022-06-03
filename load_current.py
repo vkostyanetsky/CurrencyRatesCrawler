@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 
 
 class CurrentRatesCrawler(modules.crawler.Crawler):
-    _title: str = "Import of current exchanges rates"
+    _title: str = "import of current exchanges rates"
     __big_ip_cookie_name: str = "BIGipServer~CEN-BANK~Pool-Web-Prod"
     __request_date_format_string: str = "%#d-%#m-%Y" if platform.system() == "Windows" else "%-d-%-m-%Y"
 

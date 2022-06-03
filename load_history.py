@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 
 
 class HistoricalRatesCrawler(modules.crawler.Crawler):
-    _title: str = "Import of historical exchange rates"
+    _title: str = "import of historical exchange rates"
     __historical_files_directory: str = ''
 
     def __init__(self, file):

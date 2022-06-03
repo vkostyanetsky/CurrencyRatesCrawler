@@ -332,13 +332,13 @@ class Crawler:
         time_as_string = self.get_time_as_string(self._current_datetime)
         import_date_as_string = self.get_import_date_as_string()
 
-        message = "{} started at {} ({}).".format(self._title, time_as_string, import_date_as_string)
+        message = "{} started at {} ({}).".format(self._title.capitalize(), time_as_string, import_date_as_string)
 
         self._logger.debug(message)
 
     def _write_log_event_import_completed(self, number_of_changed_rates, number_of_retroactive_rates) -> None:
         self._logger.info("{} started at {} ({}) is completed. {}".format(
-            self._title,
+            self._title.capitalize(),
             self.get_time_as_string(self._current_datetime),
             self.get_import_date_as_string(),
             self.__description_of_rates_changed(number_of_changed_rates, number_of_retroactive_rates)
@@ -361,9 +361,10 @@ class Crawler:
                 presentations.append(presentation)
 
             self._logger.warning(
-                "Summary of {} on {}: {}".format(
+                "Summary of {} on {} ({}): {}".format(
                     title,
                     self.get_date_as_string(group[0]),
+                    self._title,
                     ", ".join(presentations)
                 )
             )
