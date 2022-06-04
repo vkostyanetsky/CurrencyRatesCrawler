@@ -128,117 +128,29 @@ class Crawler:
 
             return yaml_data
 
-        def process_parameter_number_of_days_to_check():
+        def check_config_parameter(parameter_key, parameter_type, default_value):
 
-            key = 'number_of_days_to_check'
+            value = config.get(parameter_key)
 
-            if config.get(key) is None:
-                config[key] = 14
-
-        def process_parameter_number_of_days_to_add():
-
-            key = 'number_of_days_to_add'
-
-            if config.get(key) is None:
-                config[key] = 1
-
-        def process_parameter_currency_codes_filter():
-
-            key = 'currency_codes_filter'
-            value = config.get(key)
-
-            if value is None or type(value) != list:
-                config[key] = []
-
-        def process_parameter_mongodb_connection_string():
-
-            key = 'mongodb_connection_string'
-
-            if config.get(key) is None:
-                config[key] = 'mongodb://localhost:27017'
-
-        def process_parameter_mongodb_database_name():
-
-            key = 'mongodb_database_name'
-
-            if config.get(key) is None:
-                config[key] = 'uae_currency_rates'
-
-        def process_parameter_mongodb_max_delay():
-
-            key = 'mongodb_max_delay'
-
-            if config.get(key) is None:
-                config[key] = 5
-
-        def process_parameter_telegram_bot_api_token():
-
-            key = 'telegram_bot_api_token'
-
-            if config.get(key) is None:
-                config[key] = ''
-
-        def process_parameter_telegram_chat_id():
-
-            key = 'telegram_chat_id'
-
-            if config.get(key) is None:
-                config[key] = 0
-
-        def process_parameter_user_agent():
-
-            key = 'user_agent'
-
-            if config.get(key) is None:
-                config[key] = ''
-
-        def process_parameter_api_endpoint_to_get_logs():
-
-            key = 'api_endpoint_to_get_logs'
-            value = config.get(key)
-
-            if value is None or type(value) != str:
-                config[key] = ''
-
-        def process_parameter_big_ip_cookies():
-
-            key = 'big_ip_cookies'
-            value = config.get(key)
-
-            if value is None or type(value) != list:
-                config[key] = []
-
-        def process_parameter_currency_codes():
-
-            key = 'currency_codes'
-            value = config.get(key)
-
-            if value is None or type(value) != dict:
-                config[key] = {}
+            if type(value) != parameter_type:
+                config[parameter_key] = default_value
 
         config_filepath = os.path.join(self._current_directory, 'config.yaml')
 
         config = get_yaml_data(config_filepath)
 
-        process_parameter_number_of_days_to_check()
-        process_parameter_number_of_days_to_add()
-
-        process_parameter_currency_codes_filter()
-
-        process_parameter_mongodb_connection_string()
-        process_parameter_mongodb_database_name()
-        process_parameter_mongodb_max_delay()
-
-        process_parameter_telegram_bot_api_token()
-        process_parameter_telegram_chat_id()
-
-        process_parameter_user_agent()
-
-        process_parameter_api_endpoint_to_get_logs()
-
-        process_parameter_big_ip_cookies()
-
-        process_parameter_currency_codes()
+        check_config_parameter("number_of_days_to_check", int, 14)
+        check_config_parameter("number_of_days_to_add", int, 1)
+        check_config_parameter("currency_codes_filter", list, [])
+        check_config_parameter("mongodb_connection_string", str, "mongodb://localhost:27017")
+        check_config_parameter("mongodb_database_name", str, "uae_currency_rates")
+        check_config_parameter("mongodb_max_delay", int, 5)
+        check_config_parameter("telegram_bot_api_token", str, "")
+        check_config_parameter("telegram_chat_id", int, 0)
+        check_config_parameter("user_agent", str, "")
+        check_config_parameter("api_endpoint_to_get_logs", str, "")
+        check_config_parameter("big_ip_cookies", list, [])
+        check_config_parameter("currency_codes", dict, {})
 
         return config
 
