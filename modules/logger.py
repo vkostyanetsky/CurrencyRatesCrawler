@@ -1,13 +1,9 @@
 import datetime
-import os
 import requests
-
 import logging
 import logging.config
 
 from modules.db import CrawlerDB
-
-from logging.handlers import TimedRotatingFileHandler
 
 
 class TelegramMessageHandler(logging.Handler):
@@ -25,35 +21,15 @@ class TelegramMessageHandler(logging.Handler):
 
         try:
 
-            record.msg = record.msg.translate(str.maketrans({
-                '_': r"\_",
-                '*': r"\*",
-                '[': r"\[",
-                ']': r"\]",
-                '(': r"\(",
-                ')': r"\)",
-                '~': r"\~",
-                '>': r"\>",
-                '#': r"\#",
-                '+': r"\+",
-                '-': r"\-",
-                '=': r"\=",
-                '|': r"\|",
-                '{': r"\{",
-                '}': r"\}",
-                '.': r"\.",
-                '!': r"\!",
-            }))
-
             url = "https://api.telegram.org/bot{}/sendMessage".format(self.BOT_API_TOKEN)
 
             data = {
-                'parse_mode': "MarkdownV2",
+                'parse_mode': "HTML",
                 'chat_id': self.CHAT_ID,
                 'text': self.format(record)
             }
 
-            requests.post(url, data)
+            requests.post(url, params=data)
 
         except (KeyboardInterrupt, SystemExit):
             raise
