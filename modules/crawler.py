@@ -265,7 +265,7 @@ class Crawler:
             presentations = []
 
             for group_item in group[1]:
-                presentation = "{} ({} → {})".format(
+                presentation = "{}: {} → {}".format(
                     group_item[1]['currency_code'],
                     self.rate_value_presentation(group_item[0]['rate']),
                     self.rate_value_presentation(group_item[1]['rate']),
@@ -273,11 +273,11 @@ class Crawler:
                 presentations.append(presentation)
 
             self._logger.warning(
-                "Summary of {} on {} ({}): {}".format(
+                "Summary of {} on {} ({}):\n\n```\n{}\n```".format(
                     title,
                     self.get_date_as_string(group[0]),
                     self._title,
-                    ", ".join(presentations)
+                    "\n".join(presentations)
                 )
             )
 

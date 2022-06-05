@@ -25,9 +25,30 @@ class TelegramMessageHandler(logging.Handler):
 
         try:
 
+            record.msg = record.msg.translate(str.maketrans({
+                '_': r"\_",
+                '*': r"\*",
+                '[': r"\[",
+                ']': r"\]",
+                '(': r"\(",
+                ')': r"\)",
+                '~': r"\~",
+                '>': r"\>",
+                '#': r"\#",
+                '+': r"\+",
+                '-': r"\-",
+                '=': r"\=",
+                '|': r"\|",
+                '{': r"\{",
+                '}': r"\}",
+                '.': r"\.",
+                '!': r"\!",
+            }))
+
             url = "https://api.telegram.org/bot{}/sendMessage".format(self.BOT_API_TOKEN)
 
             data = {
+                'parse_mode': "MarkdownV2",
                 'chat_id': self.CHAT_ID,
                 'text': self.format(record)
             }
@@ -35,11 +56,9 @@ class TelegramMessageHandler(logging.Handler):
             requests.post(url, data)
 
         except (KeyboardInterrupt, SystemExit):
-
             raise
 
         except Exception:
-
             self.handleError(record)
 
 
