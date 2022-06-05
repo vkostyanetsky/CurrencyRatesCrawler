@@ -147,8 +147,9 @@ class Crawler:
         check_config_parameter("mongodb_max_delay", int, 5)
         check_config_parameter("telegram_bot_api_token", str, "")
         check_config_parameter("telegram_chat_id", int, 0)
-        check_config_parameter("user_agent", str, "")
+        check_config_parameter("api_url", str, "")
         check_config_parameter("api_endpoint_to_get_logs", str, "")
+        check_config_parameter("user_agent", str, "")
         check_config_parameter("big_ip_cookies", list, [])
         check_config_parameter("currency_codes", dict, {})
 
@@ -249,12 +250,38 @@ class Crawler:
         self._logger.debug(message)
 
     def _write_log_event_import_completed(self, number_of_changed_rates, number_of_retroactive_rates) -> None:
-        self._logger.info("{} started at {} ({}) is completed. {}".format(
-            self._title.capitalize(),
-            self.get_time_as_string(self._current_datetime),
-            self.get_import_date_as_string(),
-            self.__description_of_rates_changed(number_of_changed_rates, number_of_retroactive_rates)
-        ))
+        def get_logs_url():
+            if self._config['api_url'] == '' or self._config['api_endpoint_to_get_logs'] == '':
+                return ''
+
+            return "{}/{}/{}/".format(
+                self._config['api_url'],
+                self._config['api_endpoint_to_get_logs'],
+                event_import_date
+            )
+
+        event_title = self._title.capitalize()
+        event_datetime = self.get_time_as_string(self._current_datetime)
+        event_import_date = self.get_import_date_as_string()
+        event_description = self.__description_of_rates_changed(number_of_changed_rates, number_of_retroactive_rates)
+
+        logs_url = get_logs_url()
+
+        if logs_url != '':
+            self._logger.info('{} started at {} (<a href="{}">{}</a>) is completed. {}'.format(
+                event_title,
+                event_datetime,
+                logs_url,
+                event_import_date,
+                event_description
+            ))
+        else:
+            self._logger.info("{} started at {} ({}) is completed. {}".format(
+                event_title,
+                event_datetime,
+                event_import_date,
+                event_description
+            ))
 
     def __write_log_event_currency_rates_change_description(self, title: str, rates: list) -> None:
 
@@ -265,7 +292,7 @@ class Crawler:
             presentations = []
 
             for group_item in group[1]:
-                presentation = "{} ({} → {})".format(
+                presentation = "{}: {} → {}".format(
                     group_item[1]['currency_code'],
                     self.rate_value_presentation(group_item[0]['rate']),
                     self.rate_value_presentation(group_item[1]['rate']),
@@ -273,11 +300,11 @@ class Crawler:
                 presentations.append(presentation)
 
             self._logger.warning(
-                "Summary of {} on {} ({}): {}".format(
+                "Summary of {} on {} ({}):\n<pre>\n{}\n</pre>".format(
                     title,
                     self.get_date_as_string(group[0]),
                     self._title,
-                    ", ".join(presentations)
+                    "\n".join(presentations)
                 )
             )
 
