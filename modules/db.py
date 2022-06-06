@@ -61,9 +61,12 @@ class CrawlerDB:
 
     def get_logs(self, import_date: datetime.datetime):
 
-        logs = []
+        rows_filter = {'import_date': import_date}
+        rows_fields = {'_id': 0}
 
-        cursor = self.__LOGS_COLLECTION.find({'import_date': import_date}, {'_id': 0}).sort("timestamp", pymongo.ASCENDING)
+        cursor = self.__LOGS_COLLECTION.find(rows_filter, rows_fields).sort("timestamp", pymongo.ASCENDING)
+
+        logs = []
 
         for log in cursor:
             logs.append(log['text'])
@@ -99,7 +102,7 @@ class CrawlerDB:
     def get_currency_rates(
             self,
             currency_code: str,
-            import_date: datetime.datetime,
+            import_date: datetime.datetime | None,
             start_date: datetime.datetime,
             end_date: datetime.datetime):
 
