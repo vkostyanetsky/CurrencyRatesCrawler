@@ -115,7 +115,7 @@ class Crawler:
 
     def get_config(self) -> dict:
 
-        def get_yaml_data(yaml_filepath) -> dict:
+        def get_yaml_data(yaml_filepath: str) -> dict:
 
             try:
 
@@ -128,7 +128,7 @@ class Crawler:
 
             return yaml_data
 
-        def check_config_parameter(parameter_key, parameter_type, default_value):
+        def check_config_parameter(parameter_key: str, parameter_type: type, default_value: int | str | list | dict):
 
             value = config.get(parameter_key)
 
