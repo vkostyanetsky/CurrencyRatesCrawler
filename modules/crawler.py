@@ -26,7 +26,7 @@ class Crawler:
 
     _session: requests.sessions.Session = requests.session()
 
-    def __init__(self, file):
+    def __init__(self, file) -> None:
 
         # Lets-a-go!
 
@@ -47,7 +47,7 @@ class Crawler:
         self._logger.debug("Crawler initialized.")
 
     @staticmethod
-    def rate_value_presentation(value: float):
+    def rate_value_presentation(value: float) -> str:
         return format(value, ".6f")
 
     def _process_currency_rates_to_import(self, currency_rates_to_import: list) -> tuple:
@@ -168,13 +168,13 @@ class Crawler:
 
         return self._config['currency_codes'].get(currency_presentation)
 
-    def get_rate_date(self, source_date) -> datetime.datetime:
+    def get_rate_date(self, source_date: datetime.datetime) -> datetime.datetime:
 
         date_delta = datetime.timedelta(days=self._config['number_of_days_to_add'])
 
         return datetime.datetime(source_date.year, source_date.month, source_date.day) + date_delta
 
-    def unknown_currencies_warning(self, unknown_currencies):
+    def unknown_currencies_warning(self, unknown_currencies: list) -> None:
 
         if len(unknown_currencies) > 0:
             unknown_currencies = list(set(unknown_currencies))
@@ -221,7 +221,7 @@ class Crawler:
         return now - datetime.timedelta(microseconds=now.microsecond)
 
     @staticmethod
-    def get_beginning_of_this_day() -> datetime:
+    def get_beginning_of_this_day() -> datetime.datetime:
 
         today = datetime.date.today()
         return Crawler.get_datetime_from_date(today)
@@ -249,7 +249,8 @@ class Crawler:
 
         self._logger.debug(message)
 
-    def _write_log_event_import_completed(self, number_of_changed_rates, number_of_retroactive_rates) -> None:
+    def _write_log_event_import_completed(self, number_of_changed_rates: int, number_of_retroactive_rates: int) -> None:
+
         def get_logs_url():
             if self._config['api_url'] == '' or self._config['api_endpoint_to_get_logs'] == '':
                 return ''
@@ -289,6 +290,7 @@ class Crawler:
             return
 
         for group in groupby(sorted(rates, key=lambda x: x[0]['rate_date']), key=lambda x: x[0]['rate_date']):
+
             presentations = []
 
             for group_item in group[1]:
