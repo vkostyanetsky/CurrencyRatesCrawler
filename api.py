@@ -36,7 +36,8 @@ class CrawlerHTTPService(modules.crawler.Crawler):
     def get_error_response_using_date(self, date):
         return self.get_error_response(code=3, message="Unable to parse a date: {}".format(date))
 
-    def get_error_response(self, code, message):
+    @staticmethod
+    def get_error_response(code, message):
         data = {
             'error_message': message,
             'error_code': code
@@ -252,16 +253,8 @@ api.add_resource(
 api_endpoint_to_get_logs = crawler.get_config_value('api_endpoint_to_get_logs')
 
 if api_endpoint_to_get_logs != '':
-
-    api.add_resource(
-        Logs,
-        "/{}/".format(api_endpoint_to_get_logs)
-    )
-
-    api.add_resource(
-        LogsUsingImportDate,
-        "/{}/<import_date>/".format(api_endpoint_to_get_logs)
-    )
+    api.add_resource(Logs, f"/{api_endpoint_to_get_logs}/")
+    api.add_resource(LogsUsingImportDate, f"/{api_endpoint_to_get_logs}/<import_date>/")
 
 if __name__ == '__main__':
     app.run()
