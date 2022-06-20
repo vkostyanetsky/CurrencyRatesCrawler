@@ -34,7 +34,7 @@ class CrawlerHTTPService(modules.crawler.Crawler):
         super().__init__(file)
 
     def get_error_response_using_date(self, date):
-        return self.get_error_response(code=3, message="Unable to parse a date: {}".format(date))
+        return self.get_error_response(code=3, message=f"Unable to parse a date: {date}")
 
     @staticmethod
     def get_error_response(code, message):
@@ -61,7 +61,7 @@ class CrawlerHTTPService(modules.crawler.Crawler):
 
             return self.get_error_response(
                 code=4,
-                message='Exchange rates for the currency code "{}" cannot be found at UAE CB.'.format(currency_code)
+                message=f'Exchange rates for the currency code "{currency_code}" cannot be found at UAE CB.'
             )
 
         else:
@@ -253,8 +253,16 @@ api.add_resource(
 api_endpoint_to_get_logs = crawler.get_config_value('api_endpoint_to_get_logs')
 
 if api_endpoint_to_get_logs != '':
-    api.add_resource(Logs, f"/{api_endpoint_to_get_logs}/")
-    api.add_resource(LogsUsingImportDate, f"/{api_endpoint_to_get_logs}/<import_date>/")
+
+    api.add_resource(
+        Logs,
+        f"/{api_endpoint_to_get_logs}/"
+    )
+
+    api.add_resource(
+        LogsUsingImportDate,
+        f"/{api_endpoint_to_get_logs}/<import_date>/"
+    )
 
 if __name__ == '__main__':
     app.run()
