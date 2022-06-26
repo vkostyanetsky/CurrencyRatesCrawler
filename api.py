@@ -29,31 +29,30 @@ def get_date(date_as_string):
 
 
 class CrawlerHTTPService(modules.crawler.Crawler):
-
     def __init__(self, file):
         super().__init__(file)
 
     def get_error_response_using_date(self, date):
-        return self.get_error_response(code=3, message=f"Unable to parse a date: {date}")
+        return self.get_error_response(
+            code=3, message=f"Unable to parse a date: {date}"
+        )
 
     @staticmethod
     def get_error_response(code, message):
-        data = {
-            'error_message': message,
-            'error_code': code
-        }
+        data = {"error_message": message, "error_code": code}
 
         return data, 200
 
     def get_currency_codes(self) -> list:
-        return list(self._config['currency_codes'].values())
+        return list(self._config["currency_codes"].values())
 
     def get_currency_rates(
-            self,
-            currency_code: str,
-            import_date: datetime.datetime = None,
-            start_date: datetime.datetime = None,
-            end_date: datetime.datetime = None):
+        self,
+        currency_code: str,
+        import_date: datetime.datetime = None,
+        start_date: datetime.datetime = None,
+        end_date: datetime.datetime = None,
+    ):
 
         currency_code = currency_code.upper()
 
@@ -61,7 +60,7 @@ class CrawlerHTTPService(modules.crawler.Crawler):
 
             return self.get_error_response(
                 code=4,
-                message=f'Exchange rates for the currency code "{currency_code}" cannot be found at UAE CB.'
+                message=f'Exchange rates for the currency code "{currency_code}" cannot be found at UAE CB.',
             )
 
         else:
@@ -71,31 +70,36 @@ class CrawlerHTTPService(modules.crawler.Crawler):
 
             import_dates = []
 
-            rates = self._db.get_currency_rates(currency_code, import_date, start_date, end_date)
+            rates = self._db.get_currency_rates(
+                currency_code, import_date, start_date, end_date
+            )
 
             for rate in rates:
-                import_dates.append(rate['import_date'])
+                import_dates.append(rate["import_date"])
 
-                rate.update({
-                    'import_date': rate['import_date'].strftime(datetime_format_string),
-                    'rate_date': rate['rate_date'].strftime(date_format_string),
-                })
+                rate.update(
+                    {
+                        "import_date": rate["import_date"].strftime(
+                            datetime_format_string
+                        ),
+                        "rate_date": rate["rate_date"].strftime(date_format_string),
+                    }
+                )
 
-            max_import_date = max(import_dates) if len(import_dates) > 0 else datetime.datetime(1, 1, 1)
+            max_import_date = (
+                max(import_dates)
+                if len(import_dates) > 0
+                else datetime.datetime(1, 1, 1)
+            )
             max_import_date = max_import_date.strftime(datetime_format_string)
 
-            data = {
-                'rates': rates,
-                'max_import_date': max_import_date
-            }
+            data = {"rates": rates, "max_import_date": max_import_date}
 
             return data, 200
 
     def get_logs(self, import_date: datetime.datetime):
 
-        data = {
-            "logs": self._db.get_logs(import_date)
-        }
+        data = {"logs": self._db.get_logs(import_date)}
 
         return data, 200
 
@@ -103,44 +107,36 @@ class CrawlerHTTPService(modules.crawler.Crawler):
 class Hello(Resource):
     @staticmethod
     def get():
-        return crawler.get_error_response(code=1, message='No action specified.')
+        return crawler.get_error_response(code=1, message="No action specified.")
 
 
 class Info(Resource):
     @staticmethod
     def get():
-        return {
-            "version": "1.0.0"
-        }, 200
+        return {"version": "1.0.0"}, 200
 
 
 class Currencies(Resource):
-
     @staticmethod
     def get():
-        data = {
-            'currencies': crawler.get_currency_codes()
-        }
+        data = {"currencies": crawler.get_currency_codes()}
 
         return data, 200
 
 
 class Rates(Resource):
-
     @staticmethod
     def get():
-        return crawler.get_error_response(code=2, message='No currency specified.')
+        return crawler.get_error_response(code=2, message="No currency specified.")
 
 
 class RatesUsingCurrencyCode(Resource):
-
     @staticmethod
     def get(currency_code: str):
         return crawler.get_currency_rates(currency_code)
 
 
 class RatesUsingCurrencyCodeAndImportDate(Resource):
-
     @staticmethod
     def get(currency_code: str, import_date: str):
 
@@ -153,7 +149,6 @@ class RatesUsingCurrencyCodeAndImportDate(Resource):
 
 
 class RatesUsingCurrencyCodeAndImportDateAndStartDate(Resource):
-
     @staticmethod
     def get(currency_code: str, import_date: str, start_date: str):
 
@@ -171,7 +166,6 @@ class RatesUsingCurrencyCodeAndImportDateAndStartDate(Resource):
 
 
 class RatesUsingCurrencyCodeAndImportDateAndStartDateAndEndDate(Resource):
-
     @staticmethod
     def get(currency_code: str, import_date: str, start_date: str, end_date: str):
 
@@ -190,18 +184,18 @@ class RatesUsingCurrencyCodeAndImportDateAndStartDateAndEndDate(Resource):
         except ValueError:
             return crawler.get_error_response_using_date(end_date)
 
-        return crawler.get_currency_rates(currency_code, import_date, start_date, end_date)
+        return crawler.get_currency_rates(
+            currency_code, import_date, start_date, end_date
+        )
 
 
 class Logs(Resource):
-
     @staticmethod
     def get():
-        return crawler.get_error_response(code=15, message='No import date specified.')
+        return crawler.get_error_response(code=15, message="No import date specified.")
 
 
 class LogsUsingImportDate(Resource):
-
     @staticmethod
     def get(import_date: str):
         try:
@@ -217,52 +211,37 @@ crawler = CrawlerHTTPService(__file__)
 app = Flask(__name__)
 api = Api(app)
 
+api.add_resource(Hello, "/")
+
+api.add_resource(Info, "/info/")
+
+api.add_resource(Currencies, "/currencies/")
+
+api.add_resource(Rates, "/rates/")
+
+api.add_resource(RatesUsingCurrencyCode, "/rates/<currency_code>/")
+
 api.add_resource(
-    Hello,
-    "/"
+    RatesUsingCurrencyCodeAndImportDate, "/rates/<currency_code>/<import_date>/"
 )
-api.add_resource(
-    Info,
-    "/info/"
-)
-api.add_resource(
-    Currencies,
-    "/currencies/"
-)
-api.add_resource(
-    Rates,
-    "/rates/"
-)
-api.add_resource(
-    RatesUsingCurrencyCode,
-    "/rates/<currency_code>/"
-)
-api.add_resource(
-    RatesUsingCurrencyCodeAndImportDate,
-    "/rates/<currency_code>/<import_date>/"
-)
+
 api.add_resource(
     RatesUsingCurrencyCodeAndImportDateAndStartDate,
-    "/rates/<currency_code>/<import_date>/<start_date>/"
+    "/rates/<currency_code>/<import_date>/<start_date>/",
 )
+
 api.add_resource(
     RatesUsingCurrencyCodeAndImportDateAndStartDateAndEndDate,
-    "/rates/<currency_code>/<import_date>/<start_date>/<end_date>/"
+    "/rates/<currency_code>/<import_date>/<start_date>/<end_date>/",
 )
 
-api_endpoint_to_get_logs = crawler.get_config_value('api_endpoint_to_get_logs')
+api_endpoint_to_get_logs = crawler.get_config_value("api_endpoint_to_get_logs")
 
-if api_endpoint_to_get_logs != '':
+if api_endpoint_to_get_logs != "":
 
-    api.add_resource(
-        Logs,
-        f"/{api_endpoint_to_get_logs}/"
-    )
+    api.add_resource(Logs, f"/{api_endpoint_to_get_logs}/")
 
-    api.add_resource(
-        LogsUsingImportDate,
-        f"/{api_endpoint_to_get_logs}/<import_date>/"
-    )
+    api.add_resource(LogsUsingImportDate, f"/{api_endpoint_to_get_logs}/<import_date>/")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run()

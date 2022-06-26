@@ -21,12 +21,14 @@ class TelegramMessageHandler(logging.Handler):
 
         try:
 
-            url = "https://api.telegram.org/bot{}/sendMessage".format(self.BOT_API_TOKEN)
+            url = "https://api.telegram.org/bot{}/sendMessage".format(
+                self.BOT_API_TOKEN
+            )
 
             data = {
-                'parse_mode': "HTML",
-                'chat_id': self.CHAT_ID,
-                'text': self.format(record)
+                "parse_mode": "HTML",
+                "chat_id": self.CHAT_ID,
+                "text": self.format(record),
             }
 
             requests.post(url, params=data)
@@ -53,7 +55,9 @@ class MongoDBRecordHandler(logging.Handler):
 
         try:
 
-            self.__DATABASE.add_logs_entry(self.__IMPORT_DATE, record.created, self.format(record))
+            self.__DATABASE.add_logs_entry(
+                self.__IMPORT_DATE, record.created, self.format(record)
+            )
 
         except (KeyboardInterrupt, SystemExit):
 
@@ -65,7 +69,6 @@ class MongoDBRecordHandler(logging.Handler):
 
 
 def get_logger(name, config, import_date, database):
-
     def get_stream_handler():
 
         handler = logging.StreamHandler()
@@ -80,7 +83,9 @@ def get_logger(name, config, import_date, database):
 
     def get_telegram_message_handler():
 
-        handler = TelegramMessageHandler(config['telegram_bot_api_token'], config['telegram_chat_id'])
+        handler = TelegramMessageHandler(
+            config["telegram_bot_api_token"], config["telegram_chat_id"]
+        )
 
         log_format = "%(message)s"
         formatter = logging.Formatter(log_format)
@@ -107,7 +112,7 @@ def get_logger(name, config, import_date, database):
 
     logger.addHandler(get_stream_handler())
 
-    if config['telegram_bot_api_token'] != "" and config['telegram_chat_id'] != 0:
+    if config["telegram_bot_api_token"] != "" and config["telegram_chat_id"] != 0:
         logger.addHandler(get_telegram_message_handler())
 
     logger.addHandler(get_mongodb_handler())

@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 
 class HistoricalRatesCrawler(modules.crawler.Crawler):
     _title: str = "import of historical exchange rates"
-    __historical_files_directory: str = ''
+    __historical_files_directory: str = ""
 
     def __init__(self, file):
 
@@ -59,24 +59,31 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
         for link_to_file in links_to_files:
 
             currency_rates = self.__currency_rates_from_file(link_to_file)
-            self._logger.debug("Crawling results: {} rate(s).".format(len(currency_rates)))
-
-            number_of_changed_rates, number_of_retroactive_rates = self._process_currency_rates_to_import(
-                currency_rates
+            self._logger.debug(
+                "Crawling results: {} rate(s).".format(len(currency_rates))
             )
+
+            (
+                number_of_changed_rates,
+                number_of_retroactive_rates,
+            ) = self._process_currency_rates_to_import(currency_rates)
 
             total_number_of_changed_rates += number_of_changed_rates
             total_number_of_retroactive_rates += number_of_retroactive_rates
 
         self._db.insert_import_date(self._current_datetime)
 
-        self._write_log_event_import_completed(total_number_of_changed_rates, total_number_of_retroactive_rates)
+        self._write_log_event_import_completed(
+            total_number_of_changed_rates, total_number_of_retroactive_rates
+        )
 
         self._db.disconnect()
 
     def __init_historical_files_directory(self) -> None:
 
-        self.__historical_files_directory = os.path.join(self._current_directory, "history")
+        self.__historical_files_directory = os.path.join(
+            self._current_directory, "history"
+        )
 
         try:
             os.makedirs(self.__historical_files_directory, exist_ok=True)
@@ -107,15 +114,15 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
 
             load = True
 
-        elif historical_file['hash'] != file_hash:
+        elif historical_file["hash"] != file_hash:
 
             self._logger.debug(
                 "The file has been updated "
                 "since the last processing ({}), "
                 "because previous file hash ({}) "
                 "is not equal to the current one.".format(
-                    self.date_with_time_as_string(historical_file['import_date']),
-                    historical_file['file_hash']
+                    self.date_with_time_as_string(historical_file["import_date"]),
+                    historical_file["file_hash"],
                 )
             )
 
@@ -128,7 +135,7 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
                 "since the last processing ({}), "
                 "because a previous file hash "
                 "is equal to the current one.".format(
-                    self.date_with_time_as_string(historical_file['import_date'])
+                    self.date_with_time_as_string(historical_file["import_date"])
                 )
             )
 
@@ -137,14 +144,17 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
             self.__load_currency_rates_from_file(file_link, currency_rates)
 
             if historical_file is None:
-                self._db.insert_historical_file(file_link, file_hash, import_date=self._current_datetime)
+                self._db.insert_historical_file(
+                    file_link, file_hash, import_date=self._current_datetime
+                )
             else:
-                self._db.update_historical_file(file_link, file_hash, import_date=self._current_datetime)
+                self._db.update_historical_file(
+                    file_link, file_hash, import_date=self._current_datetime
+                )
 
         return currency_rates
 
     def __get_links_to_files(self) -> list:
-
         def is_link_to_excel_file(href):
             return href and re.compile("/sites/.*[a-z0-9]\\.xlsx").search(href)
 
@@ -191,22 +201,24 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
             rate_date = self.get_datetime_from_date(date_column[index])
             rate_date = self.get_rate_date(rate_date)
 
-            currency_rates.append({
-                "currency_code": currency_code,
-                "import_date": self._current_datetime,
-                "rate_date": rate_date,
-                "rate": float(rate_column[index]),
-            })
+            currency_rates.append(
+                {
+                    "currency_code": currency_code,
+                    "import_date": self._current_datetime,
+                    "rate_date": rate_date,
+                    "rate": float(rate_column[index]),
+                }
+            )
 
         self.unknown_currencies_warning(unknown_currencies)
 
     def __file_path_in_historical_files_directory(self, file_link: str) -> str:
 
-        file_name = file_link.split('/')[-1]
+        file_name = file_link.split("/")[-1]
         file_path = os.path.join(self.__historical_files_directory, file_name)
 
         with requests.get(file_link, stream=True) as response:
-            with open(file_path, 'wb') as file:
+            with open(file_path, "wb") as file:
                 shutil.copyfileobj(response.raw, file)
 
         return file_path
@@ -224,5 +236,5 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
 
 crawler = HistoricalRatesCrawler(__file__)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     crawler.run()

@@ -20,18 +20,22 @@ from bs4 import BeautifulSoup
 class CurrentRatesCrawler(modules.crawler.Crawler):
     _title: str = "import of current exchanges rates"
     __big_ip_cookie_name: str = "BIGipServer~CEN-BANK~Pool-Web-Prod"
-    __request_date_format_string: str = "%#d-%#m-%Y" if platform.system() == "Windows" else "%-d-%-m-%Y"
+    __request_date_format_string: str = (
+        "%#d-%#m-%Y" if platform.system() == "Windows" else "%-d-%-m-%Y"
+    )
 
     def __init__(self, file):
 
         super().__init__(file)
 
-    def get_rates_from_soup(self, soup: BeautifulSoup, rate_date: datetime.datetime) -> tuple:
+    def get_rates_from_soup(
+        self, soup: BeautifulSoup, rate_date: datetime.datetime
+    ) -> tuple:
 
         currency_rates = []
         unknown_currencies = []
 
-        tags = soup.find_all('td')
+        tags = soup.find_all("td")
 
         for index in range(0, len(tags), 2):
 
@@ -46,20 +50,26 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
             currency_rate_tag = tags[index + 1]
 
-            currency_rates.append({
-                'currency_code': currency_code,
-                'import_date': self._current_datetime,
-                'rate_date': rate_date,
-                'rate': float(currency_rate_tag.text),
-            })
+            currency_rates.append(
+                {
+                    "currency_code": currency_code,
+                    "import_date": self._current_datetime,
+                    "rate_date": rate_date,
+                    "rate": float(currency_rate_tag.text),
+                }
+            )
 
         return currency_rates, unknown_currencies
 
     @staticmethod
     def get_request_url(request_date: datetime.datetime) -> str:
 
-        request_date_string = request_date.strftime(CurrentRatesCrawler.__request_date_format_string)
-        url_string = "https://www.centralbank.ae/en/fx-rates-ajax?date={}&v=2".format(request_date_string)
+        request_date_string = request_date.strftime(
+            CurrentRatesCrawler.__request_date_format_string
+        )
+        url_string = "https://www.centralbank.ae/en/fx-rates-ajax?date={}&v=2".format(
+            request_date_string
+        )
 
         return url_string
 
@@ -75,7 +85,9 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         except Exception:
             raise Exception
 
-        currency_rates, unknown_currencies = self.get_rates_from_soup(soup, self.get_rate_date(update_date))
+        currency_rates, unknown_currencies = self.get_rates_from_soup(
+            soup, self.get_rate_date(update_date)
+        )
 
         return update_date, currency_rates, unknown_currencies
 
@@ -89,7 +101,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
             name=self.__big_ip_cookie_name,
             value=cookie_value,
             domain="www.centralbank.ae",
-            path="/"
+            path="/",
         )
 
     def get_data_from_bank_for_today_with_big_ip_list(self):
@@ -99,7 +111,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
         results_for_cookie_values = {}
 
-        for cookie_value in self._config['big_ip_cookies']:
+        for cookie_value in self._config["big_ip_cookies"]:
 
             self._logger.debug("Checking a Big-IP cookie: {}".format(cookie_value))
 
@@ -117,14 +129,20 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
                     "Cookie is set: {} = {}".format(cookie.name, cookie.value)
                 )
 
-            results_for_cookie_values[cookie_value] = self.get_update_date_and_currency_rates_from_soup(response)
+            results_for_cookie_values[
+                cookie_value
+            ] = self.get_update_date_and_currency_rates_from_soup(response)
 
-        cookie_value = sorted(results_for_cookie_values, key=lambda data_item: data_item[0])[0]
+        cookie_value = sorted(
+            results_for_cookie_values, key=lambda data_item: data_item[0]
+        )[0]
         cookie_value_update_date = results_for_cookie_values[cookie_value][0]
 
-        self._logger.debug("The most relevant value for the Big-IP cookie is {} (update date is {}).".format(
-            cookie_value, cookie_value_update_date
-        ))
+        self._logger.debug(
+            "The most relevant value for the Big-IP cookie is {} (update date is {}).".format(
+                cookie_value, cookie_value_update_date
+            )
+        )
 
         self.set_big_ip_cookie(cookie_value)
 
@@ -149,13 +167,12 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
     def get_data_from_bank_for_today(self):
 
-        if len(self._config['big_ip_cookies']) > 0:
+        if len(self._config["big_ip_cookies"]) > 0:
             return self.get_data_from_bank_for_today_with_big_ip_list()
         else:
             return self.get_data_from_bank_for_today_naturally()
 
     def get_data_from_bank(self, request_url) -> tuple:
-
         def get_response_json() -> dict:
 
             response = self.get_response_for_request(request_url)
@@ -182,9 +199,16 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         time.sleep(1)
 
         update_date_from_response = get_update_date_from_response()
-        currency_rates_from_response, unknown_currencies_from_response = get_currency_rates_from_response()
+        (
+            currency_rates_from_response,
+            unknown_currencies_from_response,
+        ) = get_currency_rates_from_response()
 
-        return update_date_from_response, currency_rates_from_response, unknown_currencies_from_response
+        return (
+            update_date_from_response,
+            currency_rates_from_response,
+            unknown_currencies_from_response,
+        )
 
     def run(self):
 
@@ -194,7 +218,7 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
         total_number_of_retroactive_rates = 0
 
         minimal_date = self._current_date - datetime.timedelta(
-            days=self._config['number_of_days_to_check']
+            days=self._config["number_of_days_to_check"]
         )
 
         request_date = self._current_date
@@ -207,21 +231,25 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
             if request_date == self._current_date:
 
-                self._logger.debug(
-                    "HTML to parse: {}".format(self._user_interface_url)
-                )
+                self._logger.debug("HTML to parse: {}".format(self._user_interface_url))
 
-                update_date, currency_rates, unknown_currencies = self.get_data_from_bank_for_today()
+                (
+                    update_date,
+                    currency_rates,
+                    unknown_currencies,
+                ) = self.get_data_from_bank_for_today()
 
             else:
 
                 request_url = self.get_request_url(request_date)
 
-                self._logger.debug(
-                    "JSON to parse: {}".format(request_url)
-                )
+                self._logger.debug("JSON to parse: {}".format(request_url))
 
-                update_date, currency_rates, unknown_currencies = self.get_data_from_bank(request_url)
+                (
+                    update_date,
+                    currency_rates,
+                    unknown_currencies,
+                ) = self.get_data_from_bank(request_url)
 
             self.unknown_currencies_warning(unknown_currencies)
 
@@ -229,9 +257,10 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
                 self._logger.debug("Update date is equal to the request date.")
 
-                number_of_changed_rates, number_of_retroactive_rates = self._process_currency_rates_to_import(
-                    currency_rates
-                )
+                (
+                    number_of_changed_rates,
+                    number_of_retroactive_rates,
+                ) = self._process_currency_rates_to_import(currency_rates)
 
                 total_number_of_changed_rates += number_of_changed_rates
                 total_number_of_retroactive_rates += number_of_retroactive_rates
@@ -241,7 +270,9 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
             else:
 
                 self._logger.debug(
-                    "Update date ({}) is not equal to the request date.".format(self.get_date_as_string(update_date))
+                    "Update date ({}) is not equal to the request date.".format(
+                        self.get_date_as_string(update_date)
+                    )
                 )
 
                 if minimal_date <= update_date:
@@ -254,19 +285,22 @@ class CurrentRatesCrawler(modules.crawler.Crawler):
 
                     self._logger.debug(
                         "Unable to switch to the update date since it is less than the minimal one ({}).".format(
-                            minimal_date)
+                            minimal_date
+                        )
                     )
 
                     break
 
         self._db.insert_import_date(self._current_datetime)
 
-        self._write_log_event_import_completed(total_number_of_changed_rates, total_number_of_retroactive_rates)
+        self._write_log_event_import_completed(
+            total_number_of_changed_rates, total_number_of_retroactive_rates
+        )
 
         self._db.disconnect()
 
 
 crawler = CurrentRatesCrawler(__file__)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     crawler.run()
