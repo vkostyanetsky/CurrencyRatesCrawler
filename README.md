@@ -1,6 +1,6 @@
 # UAE Currency Rates Crawler
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This is a set of scripts intended to crawl currency exchange rates on the Central Bank of United Arabian Emirates, store booty in MongoDB instance, and then allow other apps to get it via REST service.
 
