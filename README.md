@@ -21,7 +21,7 @@ So, it is possible to get rates via two different ways:
 
 ## How to set up?
 
-Have a look at [configuration file](config.yaml).
+Have a look at the [configuration file](config.yaml).
 
 ## What do I need to run it?
 
