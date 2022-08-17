@@ -2,7 +2,9 @@
 
 [![flake8](https://github.com/vkostyanetsky/CLIUtils/actions/workflows/flake8.yml/badge.svg)](https://github.com/vkostyanetsky/CLIUtils/actions/workflows/flake8.yml) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This is a set of scripts intended to crawl currency exchange rates on the Central Bank of United Arabian Emirates, store booty in MongoDB instance, and then allow other apps to get it via REST service.
+This is a set of scripts intended to effectively crawl currency exchange rates on the Central Bank of United Arabian Emirates, and then allow another app to get it via REST service.
+
+<!--
 
 ## How does it work?
 
@@ -28,3 +30,5 @@ Have a look at the [configuration file](config.yaml).
 It's required to have Python 3 (written and tested on 3.10.4) and MongoDB (tested on 5.0.6) installed.
 
 All Python dependencies listed [here](requirements.txt).
+
+-->
