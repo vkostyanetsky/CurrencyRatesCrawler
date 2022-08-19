@@ -1,85 +1,35 @@
 #!/usr/bin/env python3
 
-"""Loader of Historical Currency Rates
-
-This script finds Excel files with currency rates published at the UAE Central Bank,
-and then writes them to a database. It has no arguments, but can be customized via
-the file config.yaml in the same directory.
-
+"""
+Crawler for historical exchange rates. Finds Excel files with currency rates
+published at the UAE Central Bank, and then writes them to a database.
+It has no arguments, but can be customized via the config.yaml file
+in the same directory.
 """
 
-import re
-import os
-import ssl
-import pandas
-import shutil
 import hashlib
-import requests
-import modules.crawler
+import os
+import re
+import shutil
+import ssl
 
+import pandas
+import requests
 from bs4 import BeautifulSoup
 
+from modules.crawler import UAExchangeRatesCrawler
 
-class HistoricalRatesCrawler(modules.crawler.Crawler):
-    _title: str = "import of historical exchange rates"
+
+class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
     __historical_files_directory: str = ""
 
     def __init__(self, file):
 
         super().__init__(file)
 
-        self.__init_historical_files_directory()
+        self._init_historical_files_directory()
 
-    def run(self):
-
-        self._write_log_event_import_started()
-
-        self._logger.debug("Attempting to find links to Excel files...")
-
-        """It seems like a not optimal way to avoid CERTIFICATE_VERIFY_FAILED, but it works. 
-
-        Probably creating SSL context via create_default_context() is more appropriate:
-
-            ssl_ctx = ssl.create_default_context()
-            ssl_ctx.check_hostname = False
-            ssl_ctx.verify_mode = ssl.CERT_NONE        
-
-        However, I didn't find out how to apply this to read_excel().         
-        """
-        ssl._create_default_https_context = ssl._create_unverified_context
-
-        links_to_files = self.__get_links_to_files()
-        number_of_links = len(links_to_files)
-
-        self._logger.debug("Search results: {} link(s).".format(number_of_links))
-
-        total_number_of_changed_rates = 0
-        total_number_of_retroactive_rates = 0
-
-        for link_to_file in links_to_files:
-
-            currency_rates = self.__currency_rates_from_file(link_to_file)
-            self._logger.debug(
-                "Crawling results: {} rate(s).".format(len(currency_rates))
-            )
-
-            (
-                number_of_changed_rates,
-                number_of_retroactive_rates,
-            ) = self._process_currency_rates_to_import(currency_rates)
-
-            total_number_of_changed_rates += number_of_changed_rates
-            total_number_of_retroactive_rates += number_of_retroactive_rates
-
-        self._db.insert_import_date(self._current_datetime)
-
-        self._write_log_event_import_completed(
-            total_number_of_changed_rates, total_number_of_retroactive_rates
-        )
-
-        self._db.disconnect()
-
-    def __init_historical_files_directory(self) -> None:
+    def _init_historical_files_directory(self) -> None:
 
         self.__historical_files_directory = os.path.join(
             self._current_directory, "history"
@@ -90,90 +40,31 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
         except OSError:
             pass  # TODO needs to be processed
 
-    def __currency_rates_from_file(self, file_link: str) -> list:
-
-        currency_rates = []
-
-        self._logger.debug("LINK TO PROCESS: {}".format(file_link))
-
-        file_path = self.__file_path_in_historical_files_directory(file_link)
-        file_hash = self.__file_hash(file_path)
-
-        self._logger.debug("Downloaded file hash: {}".format(file_hash))
-
-        historical_file = self._db.historical_file(file_link)
-
-        load = False
-
-        if historical_file is None:
-
-            self._logger.debug(
-                "The file hasn't been processed before "
-                "(unable to find a previous file hash in the database)."
-            )
-
-            load = True
-
-        elif historical_file["hash"] != file_hash:
-
-            self._logger.debug(
-                "The file has been updated "
-                "since the last processing ({}), "
-                "because previous file hash ({}) "
-                "is not equal to the current one.".format(
-                    self.date_with_time_as_string(historical_file["import_date"]),
-                    historical_file["file_hash"],
-                )
-            )
-
-            load = True
-
-        else:
-
-            self._logger.debug(
-                "The file hasn't been updated "
-                "since the last processing ({}), "
-                "because a previous file hash "
-                "is equal to the current one.".format(
-                    self.date_with_time_as_string(historical_file["import_date"])
-                )
-            )
-
-        if load:
-
-            self.__load_currency_rates_from_file(file_link, currency_rates)
-
-            if historical_file is None:
-                self._db.insert_historical_file(
-                    file_link, file_hash, import_date=self._current_datetime
-                )
-            else:
-                self._db.update_historical_file(
-                    file_link, file_hash, import_date=self._current_datetime
-                )
-
-        return currency_rates
-
-    def __get_links_to_files(self) -> list:
+    def _get_links_to_files(self) -> list | None:
         def is_link_to_excel_file(href):
-            return href and re.compile("/sites/.*[a-z0-9]\\.xlsx").search(href)
-
-        response = self.get_response_for_request(self._user_interface_url)
-
-        page = BeautifulSoup(response.text, features="html.parser")
-        tags = page.find_all("a", href=is_link_to_excel_file)
+            return href and re.compile("/media/.*[a-z0-9]\\.xlsx").search(href)
 
         links = []
 
-        for tag in tags:
-            link = tag.get("href")
-            link = "https://www.centralbank.ae{}".format(link)
+        self._logger.debug("Attempting to find links to Excel files...")
 
-            links.append(link)
+        response = self._get_response_for_request(
+            "https://www.centralbank.ae/en/forex-eibor/exchange-rates/"
+        )
+
+        if response is not None:
+
+            page = BeautifulSoup(response.text, features="html.parser")
+            tags = page.find_all("a", href=is_link_to_excel_file)
+
+            for tag in tags:
+                links.append(f'https://www.centralbank.ae{tag.get("href")}')
+
+            self._logger.debug(f"Search results: {len(links)} link(s).")
 
         return links
 
-    def __load_currency_rates_from_file(self, link, currency_rates):
+    def _load_currency_rates_from_file(self, link, currency_rates):
 
         unknown_currencies = []
 
@@ -195,7 +86,7 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
                 unknown_currencies.append(currency_name)
                 continue
 
-            if not self.is_currency_code_allowed(currency_code):
+            if not self._is_currency_code_allowed(currency_code):
                 continue
 
             rate_date = self.get_datetime_from_date(date_column[index])
@@ -210,16 +101,153 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
                 }
             )
 
-        self.unknown_currencies_warning(unknown_currencies)
+        self._unknown_currencies_warning(unknown_currencies)
 
-    def __file_path_in_historical_files_directory(self, file_link: str) -> str:
+    def _currency_rates_from_file(self, file_link: str) -> list | None:
+
+        currency_rates = []
+
+        self._logger.debug("LINK TO PROCESS: {}".format(file_link))
+
+        file_path = self.__file_path_in_historical_files_directory(file_link)
+
+        if file_path is not None:
+
+            file_hash = self.__file_hash(file_path)
+
+            self._logger.debug("Downloaded file hash: {}".format(file_hash))
+
+            historical_file = self._db.historical_file(file_link)
+
+            load = False
+
+            if historical_file is None:
+
+                self._logger.debug(
+                    "The file hasn't been processed before "
+                    "(unable to find a previous file hash in the database)."
+                )
+
+                load = True
+
+            elif historical_file["hash"] != file_hash:
+
+                self._logger.debug(
+                    "The file has been updated "
+                    "since the last processing ({}), "
+                    "because previous file hash ({}) "
+                    "is not equal to the current one.".format(
+                        self.date_with_time_as_string(historical_file["import_date"]),
+                        historical_file["file_hash"],
+                    )
+                )
+
+                load = True
+
+            else:
+
+                self._logger.debug(
+                    "The file hasn't been updated "
+                    "since the last processing ({}), "
+                    "because a previous file hash "
+                    "is equal to the current one.".format(
+                        self.date_with_time_as_string(historical_file["import_date"])
+                    )
+                )
+
+            if load:
+
+                self._load_currency_rates_from_file(file_link, currency_rates)
+
+                if historical_file is None:
+                    self._db.insert_historical_file(
+                        file_link, file_hash, import_date=self._current_datetime
+                    )
+                else:
+                    self._db.update_historical_file(
+                        file_link, file_hash, import_date=self._current_datetime
+                    )
+
+        return currency_rates
+
+    def run(self):
+
+        """It seems like a not optimal way to avoid CERTIFICATE_VERIFY_FAILED, but it works.
+
+        Probably creating SSL context via create_default_context() is more appropriate:
+
+            ssl_ctx = ssl.create_default_context()
+            ssl_ctx.check_hostname = False
+            ssl_ctx.verify_mode = ssl.CERT_NONE
+
+        However, I didn't find out how to apply this to read_excel().
+        """
+        ssl._create_default_https_context = (
+            ssl._create_unverified_context
+        )  # TODO fix the cert
+
+        log_title = "import of historical exchange rates"
+
+        self._log_import_started(log_title)
+
+        links_to_files = self._get_links_to_files()
+
+        if links_to_files is not None:
+
+            changed_rates_number = 0
+
+            for link_to_file in links_to_files:
+
+                currency_rates = self._currency_rates_from_file(link_to_file)
+                self._logger.debug(
+                    "Crawling results: {} rate(s).".format(len(currency_rates))
+                )
+
+                changed_rates_number += self._process_currency_rates_to_import(
+                    currency_rates
+                )
+
+            self._db.insert_import_date(self._current_datetime)
+
+            self._log_import_completed(
+                title=log_title, changed_rates_number=changed_rates_number
+            )
+
+        else:
+
+            self._log_import_failed(title=log_title)
+
+        self._db.disconnect()
+
+    def __file_path_in_historical_files_directory(self, file_link: str) -> str | None:
 
         file_name = file_link.split("/")[-1]
         file_path = os.path.join(self.__historical_files_directory, file_name)
 
-        with requests.get(file_link, stream=True) as response:
-            with open(file_path, "wb") as file:
-                shutil.copyfileobj(response.raw, file)
+        file_is_downloaded = False
+        attempt_number = 0
+
+        while not file_is_downloaded:
+
+            if attempt_number == 3:
+                break
+
+            attempt_number += 1
+
+            self._logger.debug(f"Attempt #{attempt_number} to download the file...")
+
+            try:
+
+                with requests.get(file_link, stream=True) as response:
+                    with open(file_path, "wb") as file:
+                        shutil.copyfileobj(response.raw, file)
+                        file_is_downloaded = True
+            except (requests.exceptions.RequestException, shutil.Error) as exception:
+                self._logger.error(exception)
+
+        if not file_is_downloaded:
+            self._logger.debug(f"Unable to download the file!")
+            file_path = None
 
         return file_path
 
@@ -234,7 +262,5 @@ class HistoricalRatesCrawler(modules.crawler.Crawler):
         return md5.hexdigest()
 
 
-crawler = HistoricalRatesCrawler(__file__)
-
 if __name__ == "__main__":
-    crawler.run()
+    HistoricalUAExchangeRatesCrawler(__file__).run()

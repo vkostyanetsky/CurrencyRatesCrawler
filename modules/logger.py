@@ -1,9 +1,10 @@
 import datetime
-import requests
 import logging
 import logging.config
 
-from modules.db import CrawlerDB
+import requests
+
+from modules.db import UAExchangeRatesCrawlerDB
 
 
 class TelegramMessageHandler(logging.Handler):
@@ -42,7 +43,7 @@ class TelegramMessageHandler(logging.Handler):
 
 class MongoDBRecordHandler(logging.Handler):
     __IMPORT_DATE: datetime.datetime
-    __DATABASE: CrawlerDB
+    __DATABASE: UAExchangeRatesCrawlerDB
 
     def __init__(self, import_date, database):
 

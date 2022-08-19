@@ -1,306 +1,149 @@
 #!/usr/bin/env python3
 
-"""Loader of Currency Rates
-
-This script finds currency rates published at the UAE Central Bank, and then writes them
-to a database. It has no arguments, but can be customized via the file config.yaml
-in the same directory.
-
+"""
+Crawler for current exchange rates. Finds currency rates published at the UAE Central Bank,
+and then writes them to a database. It has no arguments, but can be customized
+via the config.yaml file in the same directory.
 """
 
-import time
 import datetime
-import platform
-import requests
-import modules.crawler
 
 from bs4 import BeautifulSoup
 
+from modules.crawler import UAExchangeRatesCrawler
 
-class CurrentRatesCrawler(modules.crawler.Crawler):
-    _title: str = "import of current exchanges rates"
-    __big_ip_cookie_name: str = "BIGipServer~CEN-BANK~Pool-Web-Prod"
-    __request_date_format_string: str = (
-        "%#d-%#m-%Y" if platform.system() == "Windows" else "%-d-%-m-%Y"
-    )
 
-    def __init__(self, file):
+class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
+    def _parse_bank_page_text(self, text: str, rate_date: datetime.datetime) -> tuple:
 
-        super().__init__(file)
+        soup = BeautifulSoup(text, features="html.parser")
 
-    def get_rates_from_soup(
-        self, soup: BeautifulSoup, rate_date: datetime.datetime
-    ) -> tuple:
-
-        currency_rates = []
+        exchange_rates = []
         unknown_currencies = []
 
         tags = soup.find_all("td")
+        currency_title = None
 
-        for index in range(0, len(tags), 2):
+        for tag in tags:
 
-            currency_name_tag = tags[index]
-            currency_code = self.get_currency_code(currency_name_tag.text)
+            # <td class="font-r fs-small text-navy-custom"></td>
 
-            if currency_code is None:
-                unknown_currencies.append(currency_name_tag)
-
-            if not self.is_currency_code_allowed(currency_code):
+            if len(tag.text) == 0:
                 continue
 
-            currency_rate_tag = tags[index + 1]
+            # <td class="font-r fs-small text-navy-custom">US Dollar</td>
 
-            currency_rates.append(
-                {
-                    "currency_code": currency_code,
-                    "import_date": self._current_datetime,
-                    "rate_date": rate_date,
-                    "rate": float(currency_rate_tag.text),
-                }
-            )
+            if not tag.text[0].isdigit():
+                currency_title = tag.text
+                continue
 
-        return currency_rates, unknown_currencies
+            # <td class="font-r fs-small text-navy-custom">3.6725</td>
 
-    @staticmethod
-    def get_request_url(request_date: datetime.datetime) -> str:
+            currency_rate = tag.text
+            currency_code = self.get_currency_code(currency_title)
 
-        request_date_string = request_date.strftime(
-            CurrentRatesCrawler.__request_date_format_string
-        )
-        url_string = "https://www.centralbank.ae/en/fx-rates-ajax?date={}&v=2".format(
-            request_date_string
-        )
+            if currency_code is None:
 
-        return url_string
+                unknown_currencies.append(currency_title)
 
-    def get_update_date_and_currency_rates_from_soup(self, response):
+            elif self._is_currency_code_allowed(currency_code):
 
-        soup = BeautifulSoup(response.text, features="html.parser")
-
-        try:
-            update_date = soup.find("span", {"class": "dir-ltr"})
-            update_date = update_date.text[:11]
-            update_date = datetime.datetime.strptime(update_date, "%d %b %Y")
-
-        except Exception:
-            raise Exception
-
-        currency_rates, unknown_currencies = self.get_rates_from_soup(
-            soup, self.get_rate_date(update_date)
-        )
-
-        return update_date, currency_rates, unknown_currencies
-
-    def set_big_ip_cookie(self, cookie_value):
-
-        self._logger.debug(
-            "Cookie is set: {} = {}".format(self.__big_ip_cookie_name, cookie_value)
-        )
-
-        self._session.cookies.set(
-            name=self.__big_ip_cookie_name,
-            value=cookie_value,
-            domain="www.centralbank.ae",
-            path="/",
-        )
-
-    def get_data_from_bank_for_today_with_big_ip_list(self):
-
-        self._logger.debug("The list of values for the Big-IP cookie is provided.")
-        self._logger.debug("Finding the most relevant value for the Big-IP cookie...")
-
-        results_for_cookie_values = {}
-
-        for cookie_value in self._config["big_ip_cookies"]:
-
-            self._logger.debug("Checking a Big-IP cookie: {}".format(cookie_value))
-
-            self.set_big_ip_cookie(cookie_value)
-
-            response = self.get_response_for_request(self._user_interface_url)
-
-            for cookie in response.cookies:
-
-                if cookie.name == self.__big_ip_cookie_name:
-                    continue
-
-                self._session.cookies.set_cookie(cookie)
-                self._logger.debug(
-                    "Cookie is set: {} = {}".format(cookie.name, cookie.value)
+                exchange_rates.append(
+                    {
+                        "currency_code": currency_code,
+                        "import_date": self._current_datetime,
+                        "rate_date": rate_date,
+                        "rate": float(currency_rate),
+                    }
                 )
 
-            results_for_cookie_values[
-                cookie_value
-            ] = self.get_update_date_and_currency_rates_from_soup(response)
+            currency_title = None
 
-        cookie_value = sorted(
-            results_for_cookie_values, key=lambda data_item: data_item[0]
-        )[0]
-        cookie_value_update_date = results_for_cookie_values[cookie_value][0]
+        return exchange_rates, unknown_currencies
 
-        self._logger.debug(
-            "The most relevant value for the Big-IP cookie is {} (update date is {}).".format(
-                cookie_value, cookie_value_update_date
-            )
+    def _parse_bank_page(self, rate_date: datetime.datetime) -> tuple | None:
+
+        parsing_results = None
+
+        response = self._get_response_for_request(
+            "https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrency"
         )
 
-        self.set_big_ip_cookie(cookie_value)
+        if response is not None:
+            parsing_results = self._parse_bank_page_text(response.text, rate_date)
 
-        return results_for_cookie_values[cookie_value]
+        return parsing_results
 
-    def get_data_from_bank_for_today_naturally(self):
+    def _get_day_end_time(self) -> datetime.datetime | None:
 
-        self._logger.debug("The list of values for the Big-IP cookie is not provided.")
+        end_time = self._config.get("day_end_time")
 
-        response = self.get_response_for_request(self._user_interface_url)
+        if end_time is not None:
+            hours, minutes = end_time.split(":")
+            end_time_shift = datetime.timedelta(hours=int(hours), minutes=int(minutes))
 
-        if response.status_code != 200:
-            raise Exception
+            end_time = self._get_beginning_of_this_day() + end_time_shift
 
-        for cookie in response.cookies:
-            self._session.cookies.set_cookie(cookie)
-            self._logger.debug(
-                "Cookie is set: {} = {}".format(cookie.name, cookie.value)
-            )
+        return end_time
 
-        return self.get_update_date_and_currency_rates_from_soup(response)
-
-    def get_data_from_bank_for_today(self):
-
-        if len(self._config["big_ip_cookies"]) > 0:
-            return self.get_data_from_bank_for_today_with_big_ip_list()
+    def _log_day_end_time(self, day_end_time: datetime.datetime | None) -> None:
+        if day_end_time is None:
+            message = "Day end time is not set."
         else:
-            return self.get_data_from_bank_for_today_naturally()
+            message = f"Day end time is {self._get_datetime_as_string(day_end_time)}."
 
-    def get_data_from_bank(self, request_url) -> tuple:
-        def get_response_json() -> dict:
+        self._logger.debug(message)
 
-            response = self.get_response_for_request(request_url)
-
-            return response.json()
-
-        def get_update_date_from_response() -> datetime.date:
-
-            string = response_json["last_updated"].split(" ")
-            string = "{} {} {}".format(string[0], string[1], string[2])
-
-            return datetime.datetime.strptime(string, "%d %b %Y")
-
-        def get_currency_rates_from_response() -> tuple:
-
-            rate_date = self.get_rate_date(update_date_from_response)
-
-            table = BeautifulSoup(response_json["table"], features="html.parser")
-
-            return self.get_rates_from_soup(table, rate_date)
-
-        response_json = get_response_json()
-
-        time.sleep(1)
-
-        update_date_from_response = get_update_date_from_response()
-        (
-            currency_rates_from_response,
-            unknown_currencies_from_response,
-        ) = get_currency_rates_from_response()
+    def _get_new_rates_date(
+        self, day_end_time: datetime.datetime | None
+    ) -> datetime.datetime:
 
         return (
-            update_date_from_response,
-            currency_rates_from_response,
-            unknown_currencies_from_response,
+            self._current_date
+            if day_end_time is None or self._current_datetime <= day_end_time
+            else self._current_date + datetime.timedelta(days=1)
         )
+
+    def _log_new_rates_date(self, new_rates_date: datetime.datetime) -> None:
+        message = f"New rates date is {self._get_date_as_string(new_rates_date)}."
+        self._logger.debug(message)
 
     def run(self):
 
-        self._write_log_event_import_started()
+        log_title = "import of current exchange rates"
 
-        total_number_of_changed_rates = 0
-        total_number_of_retroactive_rates = 0
+        self._log_import_started(title=log_title)
 
-        minimal_date = self._current_date - datetime.timedelta(
-            days=self._config["number_of_days_to_check"]
-        )
+        day_end_time = self._get_day_end_time()
+        self._log_day_end_time(day_end_time)
 
-        request_date = self._current_date
+        new_rates_date = self._get_new_rates_date(day_end_time)
+        self._log_new_rates_date(new_rates_date)
 
-        while request_date >= minimal_date:
+        parsing_results = self._parse_bank_page(new_rates_date)
 
-            self._logger.debug(
-                "REQUEST DATE: {}".format(self.get_date_as_string(request_date))
+        if parsing_results is not None:
+
+            exchange_rates, unknown_currencies = parsing_results
+
+            self._unknown_currencies_warning(unknown_currencies)
+
+            changed_rates_number = self._process_currency_rates_to_import(
+                exchange_rates
             )
 
-            if request_date == self._current_date:
+            self._db.insert_import_date(self._current_datetime)
 
-                self._logger.debug("HTML to parse: {}".format(self._user_interface_url))
+            self._log_import_completed(
+                title=log_title, changed_rates_number=changed_rates_number
+            )
 
-                (
-                    update_date,
-                    currency_rates,
-                    unknown_currencies,
-                ) = self.get_data_from_bank_for_today()
+        else:
 
-            else:
-
-                request_url = self.get_request_url(request_date)
-
-                self._logger.debug("JSON to parse: {}".format(request_url))
-
-                (
-                    update_date,
-                    currency_rates,
-                    unknown_currencies,
-                ) = self.get_data_from_bank(request_url)
-
-            self.unknown_currencies_warning(unknown_currencies)
-
-            if update_date == request_date:
-
-                self._logger.debug("Update date is equal to the request date.")
-
-                (
-                    number_of_changed_rates,
-                    number_of_retroactive_rates,
-                ) = self._process_currency_rates_to_import(currency_rates)
-
-                total_number_of_changed_rates += number_of_changed_rates
-                total_number_of_retroactive_rates += number_of_retroactive_rates
-
-                request_date -= datetime.timedelta(days=1)
-
-            else:
-
-                self._logger.debug(
-                    "Update date ({}) is not equal to the request date.".format(
-                        self.get_date_as_string(update_date)
-                    )
-                )
-
-                if minimal_date <= update_date:
-
-                    self._logger.debug("Switching to the update date.")
-
-                    request_date = update_date
-
-                else:
-
-                    self._logger.debug(
-                        "Unable to switch to the update date since it is less than the minimal one ({}).".format(
-                            minimal_date
-                        )
-                    )
-
-                    break
-
-        self._db.insert_import_date(self._current_datetime)
-
-        self._write_log_event_import_completed(
-            total_number_of_changed_rates, total_number_of_retroactive_rates
-        )
+            self._log_import_failed(title=log_title)
 
         self._db.disconnect()
 
 
-crawler = CurrentRatesCrawler(__file__)
-
 if __name__ == "__main__":
-    crawler.run()
+    CurrentUAExchangeRatesCrawler(__file__).run()

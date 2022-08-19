@@ -1,19 +1,4 @@
-# Indicates how many days before the current one will be checked during a crawling process.
-# For instance, if today is 12-04-2022 and this parameter is equal to 2, the crawler
-# tries to get currency rates at 12-04-2022, 11-04-2022, and 10-04-2022.
-#
-number_of_days_to_check: 7
-
-# Indicates how many days the crawler must add to a date of a rate it gets. For instance,
-# if this parameter is equal to 1 and UAE Central Bank says that rate of a currency is
-# 3.65 at 12-04-2022, the crawler writes this date to MongoDB as 13-04-2022.
-#
-# The bank used to publish rates every evening, so it looks logical to register them
-# for a next day.
-#
-number_of_days_to_add: 1
-
-# Indicates currencies to work with. Is it has no items, it means that
+# Indicates currencies to work with. If it has no items, it means that
 # it includes all possible currencies which scripts are able to find.
 #
 # Example:
@@ -24,16 +9,22 @@ currency_codes_filter:
   - USD
   - EUR
 
+# Exchange rates crawler from this time will be registered as rates for the next day.
+# Leave this parameter blank if you want to disable this behavior. You can also set
+# it to 00:00 in case you want all the crawler rates to be registered for tomorrow.
+#
+day_end_time: "18:00"
+
 # Connection parameters for MongoDB.
 #
-mongodb_connection_string:  "mongodb://localhost:27017"
-mongodb_database_name:      "uae_currency_rates"
-mongodb_max_delay:          5
+mongodb_connection_string: "mongodb://localhost:27017"
+mongodb_database_name: "uae_currency_rates"
+mongodb_max_delay: 5
 
 # Integration parameters for Telegram.
 #
 telegram_bot_api_token: ""
-telegram_chat_id:       0
+telegram_chat_id: 0
 
 # External URL of the REST service will be added to log and messages to the Telegram chat.
 #
@@ -52,111 +43,163 @@ api_endpoint_to_get_logs: ""
 #
 user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0"
 
-# A list of values for a cookie “BIGipServer~CEN-BANK~Pool-Web-Prod” of the bank website. The crawler will use
-# one of them while sending requests, instead of value which it can get from a server response.
+# Currency codes (in Arabian). This list is intended to convert a presentation
+# of a currency to its code, accordingly to ISO 4217 (https://en.wikipedia.org/wiki/ISO_4217).
 #
-# What's the deal? Well, usually, a Big-IP cookie contains a server address and a port number, both are encoded.
-# It is a part of a load balancing system of a website, and here it is intended to make the bank website
-# more stable as well. To simplify, a server which is encoded in a cookie value will be used
-# to get content requested by a user.
-#
-# Normally, when you send a request to the bank website, it specifies a value of this cookie. Why do you need
-# a changeable setting instead of it, do you ask? Well, the answer is that it definitely has a sync issue
-# between balancing servers. From time to time, I am observing a situation when a server that is set
-# by the cookie responding with outdated data (for instance, currency rates updated Oct-31,
-# but the server said they updated Oct-27).
-#
-# I have collected two possible values only for this cookie (which should be considered as two servers,
-# as far as I understand) and listed them below as default setting. Having these, the crawler will try to get
-# which server has the more actual data by checking update date. The winner will be picked up
-# for the current session.
-#
-# I suppose, when the time comes, the bank will resolve the sync problem between servers, and this patch
-# will become useless. Then you can delete the list, and the crawler will get a value of the cookie naturally,
-# from a response of the server, as it should.
-#
-big_ip_cookies:
-  - "rd37o00000000000000000000ffff0a009242o443"
-  - "rd37o00000000000000000000ffff0a009243o443"
-
-# Country Currency Codes. Scripts use this list to convert a presentation of a currency
-# to its code, accordingly to ISO 4217 (https://en.wikipedia.org/wiki/ISO_4217).
+# Currently, the bank's website returns currency titles in Arabian. However, in some cases
+# you still can get English ones, so I included them too.
 #
 currency_codes:
-  "New Zealand Dollar":       NZD
-  "US Dollar":                USD
-  "Argentine Peso":           ARS
-  "Australian Dollar":        AUD
-  "Bangladesh Taka":          BDT
-  "Bahrani Dinar":            BHD
-  "Brunei Dollar":            BND
-  "Brazilian Real":           BRL
-  "Botswana Pula":            BWP
-  "Belarus Rouble":           BYN
-  "Canadian Dollar":          CAD
-  "Swiss Franc":              CHF
-  "Chilean Peso":             CLP
-  "Chinese Yuan - Offshore":  CNY
-  "Chinese Yuan":             CNY
-  "Colombian Peso":           COP
-  "Czech Koruna":             CZK
-  "Danish Krone":             DKK
-  "Algerian Dinar":           DZD
-  "Egypt Pound":              EGP
-  "Euro":                     EUR
-  "GB Pound":                 GBP
-  "Hongkong Dollar":          HKD
-  "Hungarian Forint":         HUF
-  "Indonesia Rupiah":         IDR
-  "Indian Rupee":             INR
-  "Iceland Krona":            ISK
-  "Jordan Dinar":             JOD
-  "Japanese Yen":             JPY
-  "Kenya Shilling":           KES
-  "Korean Won":               KRW
-  "Kuwaiti Dinar":            KWD
-  "Kazakhstan Tenge":         KZT
-  "Lebanon Pound":            LBP
-  "Sri Lanka Rupee":          LKR
-  "Moroccan Dirham":          MAD
-  "Macedonia Denar":          MKD
-  "Mexican Peso":             MXN
-  "Malaysia Ringgit":         MYR
-  "Nigerian Naira":           NGN
-  "Norwegian Krone":          NOK
-  "NewZealand Dollar":        NZD
-  "Omani Rial":               OMR
-  "Peru Sol":                 PEN
-  "Philippine Piso":          PHP
-  "Pakistan Rupee":           PKR
-  "Polish Zloty":             PLN
-  "Qatari Riyal":             QAR
-  "Serbian Dinar":            RSD
-  "Russia Rouble":            RUB
-  "Saudi Riyal":              SAR
-  "Swedish Krona":            SWK
-  "Singapore Dollar":         SGD
-  "Thai Baht":                THB
-  "Tunisian Dinar":           TND
-  "Turkish Lira":             TRY
-  "Trin Tob Dollar":          TTD
-  "Taiwan Dollar":            TWD
-  "Tanzania Shilling":        TZS
-  "Uganda Shilling":          UGX
-  "Vietnam Dong":             VND
-  "South Africa Rand":        ZAR
-  "Zambian Kwacha":           ZMW
-  "Sudanese Pound":           SDG
-  "Yemen Rial":               YER
-  "Azerbaijan manat":         AZN
-  "Bulgarian lev":            BGN
-  "Croatian kuna":            HRK
-  "Ethiopian birr":           ETB
-  "Iraqi dinar":              IQD
-  "Israeli new shekel":       ILS
-  "Libyan dinar":             LYD
-  "Mauritian rupee":          MUR
-  "Romanian leu":             RON
-  "Syrian pound":             SYP
-  "Turkmen manat":            TMT
-  "Uzbekistani som":          UZS
+  "دولار امريكي": USD
+  "بيسو ارجنتيني": ARS
+  "دولار استرالي": AUD
+  "تاكا بنغلاديشية": BDT
+  "دينار بحريني": BHD
+  "دولار بروناي": BND
+  "ريال برازيلي": BRL
+  "بولا بوتسواني": BWP
+  "روبل بلاروسي": BYN
+  "دولار كندي": CAD
+  "فرنك سويسري": CHF
+  "بيزو تشيلي": CLP
+  "يوان صيني - الخارج": CNY
+  "يوان صيني": CNY
+  "بيزو كولومبي": COP
+  "كرونة تشيكية": CZK
+  "كرون دانماركي": DKK
+  "دينار جزائري": DZD
+  "جينيه مصري": EGP
+  "يورو": EUR
+  "جنيه استرليني": GBP
+  "دولار هونج كونج": HKD
+  "فورنت هنغاري": HUF
+  "روبية اندونيسية": IDR
+  "روبية هندية": INR
+  "كرونة آيسلندية": ISK
+  "دينار أردني": JOD
+  "ين ياباني": JPY
+  "شلن كيني": KES
+  "ون كوري": KRW
+  "دينار كويتي": KWD
+  "تينغ كازاخستاني": KZT
+  "ليرة لبنانية": LBP
+  "روبية سريلانكي": LKR
+  "درهم مغربي": MAD
+  "دينار مقدوني": MKD
+  "بيسو مكسيكي": MXN
+  "رينغيت ماليزي": MYR
+  "نيرا نيجيري": NGN
+  "كرون نرويجي": NOK
+  "دولار نيوزيلندي": NZD
+  "ريال عماني": OMR
+  "سول بيروفي": PEN
+  "بيسو فلبيني": PHP
+  "روبية باكستانية": PKR
+  "زلوتي بولندي": PLN
+  "ريال قطري": QAR
+  "دينار صربي": RSD
+  "روبل روسي": RUB
+  "ريال سعودي": SAR
+  "دينار سوداني": SDG
+  "كرونة سويدية": SWK
+  "دولار سنغافوري": SGD
+  "بات تايلندي": THB
+  "دينار تونسي": TND
+  "ليرة تركية": TRY
+  "دولار تريندادي": TTD
+  "دولار تايواني": TWD
+  "شلن تنزاني": TZS
+  "شلن اوغندي": UGX
+  "دونغ فيتنامي": VND
+  "ريال يمني": YER
+  "راند جنوب أفريقي": ZAR
+  "كواشا زامبي": ZMW
+  "مانات أذربيجاني": AZN
+  "ليف بلغاري": BGN
+  "كونا كرواتية": HRK
+  "بر إثيوبي": ETB
+  "دينار عراقي": IQD
+  "شيكل اسرائيلي": ILS
+  "دينار ليبي": LYD
+  "روبي موريشي": MUR
+  "ليو روماني": RON
+  "ليرة سورية": SYP
+  "منات تركمانستاني": TMT
+  "سوم أوزبكستاني": UZS
+  "New Zealand Dollar": NZD
+  "US Dollar": USD
+  "Argentine Peso": ARS
+  "Australian Dollar": AUD
+  "Bangladesh Taka": BDT
+  "Bahrani Dinar": BHD
+  "Brunei Dollar": BND
+  "Brazilian Real": BRL
+  "Botswana Pula": BWP
+  "Belarus Rouble": BYN
+  "Canadian Dollar": CAD
+  "Swiss Franc": CHF
+  "Chilean Peso": CLP
+  "Chinese Yuan - Offshore": CNY
+  "Chinese Yuan": CNY
+  "Colombian Peso": COP
+  "Czech Koruna": CZK
+  "Danish Krone": DKK
+  "Algerian Dinar": DZD
+  "Egypt Pound": EGP
+  "Euro": EUR
+  "GB Pound": GBP
+  "Hongkong Dollar": HKD
+  "Hungarian Forint": HUF
+  "Indonesia Rupiah": IDR
+  "Indian Rupee": INR
+  "Iceland Krona": ISK
+  "Jordan Dinar": JOD
+  "Japanese Yen": JPY
+  "Kenya Shilling": KES
+  "Korean Won": KRW
+  "Kuwaiti Dinar": KWD
+  "Kazakhstan Tenge": KZT
+  "Lebanon Pound": LBP
+  "Sri Lanka Rupee": LKR
+  "Moroccan Dirham": MAD
+  "Macedonia Denar": MKD
+  "Mexican Peso": MXN
+  "Malaysia Ringgit": MYR
+  "Nigerian Naira": NGN
+  "Norwegian Krone": NOK
+  "NewZealand Dollar": NZD
+  "Omani Rial": OMR
+  "Peru Sol": PEN
+  "Philippine Piso": PHP
+  "Pakistan Rupee": PKR
+  "Polish Zloty": PLN
+  "Qatari Riyal": QAR
+  "Serbian Dinar": RSD
+  "Russia Rouble": RUB
+  "Saudi Riyal": SAR
+  "Swedish Krona": SWK
+  "Singapore Dollar": SGD
+  "Thai Baht": THB
+  "Tunisian Dinar": TND
+  "Turkish Lira": TRY
+  "Trin Tob Dollar": TTD
+  "Taiwan Dollar": TWD
+  "Tanzania Shilling": TZS
+  "Uganda Shilling": UGX
+  "Vietnam Dong": VND
+  "South Africa Rand": ZAR
+  "Zambian Kwacha": ZMW
+  "Sudanese Pound": SDG
+  "Yemen Rial": YER
+  "Azerbaijan manat": AZN
+  "Bulgarian lev": BGN
+  "Croatian kuna": HRK
+  "Ethiopian birr": ETB
+  "Iraqi dinar": IQD
+  "Israeli new shekel": ILS
+  "Libyan dinar": LYD
+  "Mauritian rupee": MUR
+  "Romanian leu": RON
+  "Syrian pound": SYP
+  "Turkmen manat": TMT
+  "Uzbekistani som": UZS

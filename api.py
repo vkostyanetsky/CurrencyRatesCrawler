@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import datetime
-import modules.crawler
 
 from flask import Flask
-from flask_restful import Api
-from flask_restful import Resource
+from flask_restful import Api, Resource
+
+from modules.crawler import UAExchangeRatesCrawler
 
 
 def get_date(date_as_string):
@@ -28,7 +28,7 @@ def get_date(date_as_string):
     return datetime.datetime(year, month, day, hour, minute, second)
 
 
-class CrawlerHTTPService(modules.crawler.Crawler):
+class CrawlerHTTPService(UAExchangeRatesCrawler):
     def __init__(self, file):
         super().__init__(file)
 
@@ -113,7 +113,7 @@ class Hello(Resource):
 class Info(Resource):
     @staticmethod
     def get():
-        return {"version": "1.0.0"}, 200
+        return {"version": "1.1.0"}, 200
 
 
 class Currencies(Resource):

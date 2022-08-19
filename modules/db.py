@@ -1,9 +1,10 @@
-import pymongo.mongo_client
-import pymongo.database
 import datetime
 
+import pymongo.database
+import pymongo.mongo_client
 
-class CrawlerDB:
+
+class UAExchangeRatesCrawlerDB:
     __CLIENT: pymongo.MongoClient = None
     __DATABASE: pymongo.database.Database = None
     __HISTORICAL_FILES_COLLECTION: pymongo.collection = None
