@@ -7,6 +7,8 @@ from flask_restful import Api, Resource
 
 from modules.crawler import UAExchangeRatesCrawler
 
+from version import __version__
+
 
 def get_date(date_as_string):
     year = int(date_as_string[:4])
@@ -113,7 +115,7 @@ class Hello(Resource):
 class Info(Resource):
     @staticmethod
     def get():
-        return {"version": "1.1.0"}, 200
+        return {"version": __version__}, 200
 
 
 class Currencies(Resource):
