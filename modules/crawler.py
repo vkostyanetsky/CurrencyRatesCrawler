@@ -136,8 +136,6 @@ class UAExchangeRatesCrawler:
 
         config = get_yaml_data(config_filepath)
 
-        check_parameter("number_of_days_to_check", int, 14)
-        check_parameter("number_of_days_to_add", int, 1)
         check_parameter("currency_codes_filter", list, [])
         check_parameter("mongodb_connection_string", str, "mongodb://localhost:27017")
         check_parameter("mongodb_database_name", str, "uae_currency_rates")
@@ -147,7 +145,6 @@ class UAExchangeRatesCrawler:
         check_parameter("api_url", str, "")
         check_parameter("api_endpoint_to_get_logs", str, "")
         check_parameter("user_agent", str, "")
-        check_parameter("big_ip_cookies", list, [])
         check_parameter("currency_codes", dict, {})
 
         return config
