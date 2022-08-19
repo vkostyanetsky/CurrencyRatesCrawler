@@ -1,3 +1,15 @@
+#!/usr/bin/env python3
+
+"""
+Basic crawler class. Contains core functionality for a working prototype:
+- functions to work with currencies
+- functions to make HTTP requests
+- functions to write various logs
+- configuration loading
+- database connection
+- logger instance
+"""
+
 import datetime
 import os
 from itertools import groupby
