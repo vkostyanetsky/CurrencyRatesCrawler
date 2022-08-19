@@ -1,6 +1,6 @@
 # UAE Exchange Rates
 
-[![flake8](https://github.com/vkostyanetsky/CLIUtils/actions/workflows/flake8.yml/badge.svg)](https://github.com/vkostyanetsky/CLIUtils/actions/workflows/flake8.yml) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![flake8](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/flake8.yml/badge.svg)](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/flake8.yml) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This is a set of scripts intended to effectively crawl currency exchange rates on the Central Bank of United Arabian Emirates, and then allow another app to get it via REST service.
 
