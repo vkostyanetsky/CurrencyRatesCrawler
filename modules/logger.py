@@ -64,7 +64,7 @@ class MongoDBRecordHandler(logging.Handler):
 
             raise
 
-        except Exception:
+        except Exception:  # TODO ???
 
             self.handleError(record)
 
@@ -74,7 +74,7 @@ def get_logger(name, config, import_date, database):
 
         handler = logging.StreamHandler()
 
-        log_format = f"%(asctime)s [%(levelname)s] %(message)s"
+        log_format = "%(asctime)s [%(levelname)s] %(message)s"
         formatter = logging.Formatter(log_format)
 
         handler.setFormatter(formatter)
@@ -100,7 +100,7 @@ def get_logger(name, config, import_date, database):
 
         handler = MongoDBRecordHandler(import_date, database)
 
-        log_format = f"%(asctime)s [%(levelname)s] %(message)s"
+        log_format = "%(asctime)s [%(levelname)s] %(message)s"
         formatter = logging.Formatter(log_format)
 
         handler.setFormatter(formatter)
