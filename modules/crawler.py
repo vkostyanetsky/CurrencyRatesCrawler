@@ -286,7 +286,7 @@ class UAExchangeRatesCrawler:
 
             if attempt > 3:
                 self._logger.debug(
-                    f"The maximum number of attempts to get a response is reached."
+                    "The maximum number of attempts to get a response is reached."
                 )
                 break
 
