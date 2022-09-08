@@ -203,3 +203,11 @@ currency_codes:
   "Syrian pound": SYP
   "Turkmen manat": TMT
   "Uzbekistani som": UZS
+
+# URL to crawl current exchange rates.
+#
+current_exchange_rates_url: "https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrency"
+
+# URL to crawl links to historical exchange rates.
+#
+historical_exchange_rates_url: "https://www.centralbank.ae/en/forex-eibor/exchange-rates/"

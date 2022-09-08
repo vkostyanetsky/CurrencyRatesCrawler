@@ -48,9 +48,8 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         self._logger.debug("Attempting to find links to Excel files...")
 
-        response = self._get_response_for_request(
-            "https://www.centralbank.ae/en/forex-eibor/exchange-rates/"
-        )
+        page_url = self._config.get("historical_exchange_rates_url")
+        response = self._get_response_for_request(page_url)
 
         if response is not None:
 
@@ -60,7 +59,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
             for tag in tags:
                 links.append(f'https://www.centralbank.ae{tag.get("href")}')
 
-            self._logger.debug(f"Search results: {len(links)} link(s).")
+            self._logger.debug("Search results: %d link(s).", len(links))
 
         return links
 
@@ -107,7 +106,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         currency_rates = []
 
-        self._logger.debug("LINK TO PROCESS: {}".format(file_link))
+        self._logger.debug("LINK TO PROCESS: %s", file_link)
 
         file_path = self.__file_path_in_historical_files_directory(file_link)
 
@@ -115,7 +114,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
             file_hash = self.__file_hash(file_path)
 
-            self._logger.debug("Downloaded file hash: {}".format(file_hash))
+            self._logger.debug("Downloaded file hash: %s", file_hash)
 
             historical_file = self._db.historical_file(file_link)
 
@@ -148,11 +147,10 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
                 self._logger.debug(
                     "The file hasn't been updated "
-                    "since the last processing ({}), "
+                    "since the last processing (%s), "
                     "because a previous file hash "
-                    "is equal to the current one.".format(
-                        self.date_with_time_as_string(historical_file["import_date"])
-                    )
+                    "is equal to the current one.",
+                    self.date_with_time_as_string(historical_file["import_date"])
                 )
 
             if load:
@@ -200,7 +198,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
                 currency_rates = self._currency_rates_from_file(link_to_file)
                 self._logger.debug(
-                    "Crawling results: {} rate(s).".format(len(currency_rates))
+                    "Crawling results: %d rate(s).", len(currency_rates)
                 )
 
                 changed_rates_number += self._process_currency_rates_to_import(
@@ -234,7 +232,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
             attempt_number += 1
 
-            self._logger.debug(f"Attempt #{attempt_number} to download the file...")
+            self._logger.debug("Attempt #%d to download the file...", attempt_number)
 
             try:
 
@@ -246,7 +244,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
                 self._logger.error(exception)
 
         if not file_is_downloaded:
-            self._logger.debug(f"Unable to download the file!")
+            self._logger.debug("Unable to download the file!")
             file_path = None
 
         return file_path

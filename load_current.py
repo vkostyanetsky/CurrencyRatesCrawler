@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
 """
-Crawler for current exchange rates. Finds currency rates published at the UAE Central Bank,
-and then writes them to a database. It has no arguments, but can be customized
-via the config.yaml file in the same directory.
+Crawler for current exchange rates. It finds rates published
+at the UAE Central Bank, and then writes them to a database.
+
+It has no arguments, but can be customized via the config.yaml
+file in the same directory.
 """
 
 import datetime
+import re
 
 from bs4 import BeautifulSoup
 
@@ -65,9 +68,8 @@ class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         parsing_results = None
 
-        response = self._get_response_for_request(
-            "https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrency"
-        )
+        page_url = self._config.get("current_exchange_rates_url")
+        response = self._get_response_for_request(page_url)
 
         if response is not None:
             parsing_results = self._parse_bank_page_text(response.text, rate_date)
