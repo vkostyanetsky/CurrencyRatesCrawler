@@ -48,7 +48,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         self._logger.debug("Attempting to find links to Excel files...")
 
-        page_url = self._config.get("historical_exchange_rates_url")
+        page_url = 'https://www.centralbank.ae/en/forex-eibor/exchange-rates/'
         response = self._get_response_for_request(page_url)
 
         if response is not None:

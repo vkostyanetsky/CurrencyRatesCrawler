@@ -1,5 +1,11 @@
+# Connection parameters for MongoDB.
+#
+mongodb_connection_string: "mongodb://localhost:27017"
+mongodb_database_name: "uae_currency_rates"
+mongodb_max_delay: 5
+
 # Indicates currencies to work with. If it has no items, it means that
-# it includes all possible currencies which scripts are able to find.
+# it includes all possible currencies the crawler is able to find.
 #
 # Example:
 # - USD
@@ -9,24 +15,34 @@ currency_codes_filter:
   - USD
   - EUR
 
-# Exchange rates crawler from this time will be registered as rates for the next day.
-# Leave this parameter blank if you want to disable this behavior. You can also set
-# it to 00:00 in case you want all the crawler rates to be registered for tomorrow.
+# This options defines how many days (including the current one)
+# must be retrieved each time when crawler begins to load
+# current currency rates.
 #
-day_end_time: "18:00"
-
-# Connection parameters for MongoDB.
+# For instance: today is 2022-10-17, days_to_check is 3. Having this,
+# the crawler will get rates for:
+# - 2022-10-17
+# - 2022-10-16
+# - 2022-10-15
 #
-mongodb_connection_string: "mongodb://localhost:27017"
-mongodb_database_name: "uae_currency_rates"
-mongodb_max_delay: 5
+days_to_check: 4
 
 # Integration parameters for Telegram.
 #
 telegram_bot_api_token: ""
 telegram_chat_id: 0
 
-# External URL of the REST service will be added to log and messages to the Telegram chat.
+# Enable this option if you want to see text of bank's website responses
+# in log entries.
+#
+# A purpose of the feature is debugging, so you may leave it blank.
+#
+log_response_text: false
+
+# External URL of the REST service will be added to log entries
+# and messages to the Telegram chat specified in telegram_chat_id.
+#
+# A purpose of the feature is debugging, so you may leave it blank.
 #
 api_url: ""
 
@@ -34,20 +50,20 @@ api_url: ""
 # Please consider making this one hard to pick up (good example
 # of the name: "logs-ueqqp7oemvsqrorx27e2").
 #
-# A purpose of the feature is debugging, so usually you don't need this enabled,
-# and you may leave it blank.
+# A purpose of the feature is debugging, so you may leave it blank.
 #
 api_endpoint_to_get_logs: ""
 
-# A value of the User-Agent HTTP header that crawler will be used making requests to the bank website.
+# A value of the User-Agent HTTP header that crawler will use
+# making requests to the bank website.
 #
 user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0"
 
-# Currency codes (in Arabian). This list is intended to convert a presentation
-# of a currency to its code, accordingly to ISO 4217 (https://en.wikipedia.org/wiki/ISO_4217).
+# Currency codes (in Arabic & English). This list is intended to convert
+# a presentation of a currency to its code, accordingly to ISO 4217.
 #
-# Currently, the bank's website returns currency titles in Arabian. However, in some cases
-# you still can get English ones, so I included them too.
+# Currently, the bank's website returns currency titles in Arabic. However,
+# in some cases you still can get English ones, so I included them as well.
 #
 currency_codes:
   "دولار امريكي": USD
@@ -204,10 +220,3 @@ currency_codes:
   "Turkmen manat": TMT
   "Uzbekistani som": UZS
 
-# URL to crawl current exchange rates.
-#
-current_exchange_rates_url: "https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrency"
-
-# URL to crawl links to historical exchange rates.
-#
-historical_exchange_rates_url: "https://www.centralbank.ae/en/forex-eibor/exchange-rates/"

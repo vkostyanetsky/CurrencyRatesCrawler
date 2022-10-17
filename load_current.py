@@ -9,15 +9,15 @@ file in the same directory.
 """
 
 import datetime
-import re
-
 from bs4 import BeautifulSoup
 
 from modules.crawler import UAExchangeRatesCrawler
 
 
 class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
-    def _parse_bank_page_text(self, text: str, rate_date: datetime.datetime) -> tuple:
+    def _parse_rates_text_for_date(
+        self, text: str, rate_date: datetime.datetime
+    ) -> tuple:
 
         soup = BeautifulSoup(text, features="html.parser")
 
@@ -64,51 +64,19 @@ class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         return exchange_rates, unknown_currencies
 
-    def _parse_bank_page(self, rate_date: datetime.datetime) -> tuple | None:
+    def _parse_rates_for_date(self, rate_date: datetime.datetime) -> tuple | None:
 
-        parsing_results = None
+        date_for_date = None
 
-        page_url = self._config.get("current_exchange_rates_url")
+        page_url = "https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrencyDate"  # noqa: E501
+        page_url = f"{page_url}?dateTime={rate_date:%Y-%m-%d}"
+
         response = self._get_response_for_request(page_url)
 
-        if response is not None:
-            parsing_results = self._parse_bank_page_text(response.text, rate_date)
+        if response is not None and response.status_code == 200:
+            date_for_date = self._parse_rates_text_for_date(response.text, rate_date)
 
-        return parsing_results
-
-    def _get_day_end_time(self) -> datetime.datetime | None:
-
-        end_time = self._config.get("day_end_time")
-
-        if end_time is not None:
-            hours, minutes = end_time.split(":")
-            end_time_shift = datetime.timedelta(hours=int(hours), minutes=int(minutes))
-
-            end_time = self._get_beginning_of_this_day() + end_time_shift
-
-        return end_time
-
-    def _log_day_end_time(self, day_end_time: datetime.datetime | None) -> None:
-        if day_end_time is None:
-            message = "Day end time is not set."
-        else:
-            message = f"Day end time is {self._get_datetime_as_string(day_end_time)}."
-
-        self._logger.debug(message)
-
-    def _get_new_rates_date(
-        self, day_end_time: datetime.datetime | None
-    ) -> datetime.datetime:
-
-        return (
-            self._current_date
-            if day_end_time is None or self._current_datetime <= day_end_time
-            else self._current_date + datetime.timedelta(days=1)
-        )
-
-    def _log_new_rates_date(self, new_rates_date: datetime.datetime) -> None:
-        message = f"New rates date is {self._get_date_as_string(new_rates_date)}."
-        self._logger.debug(message)
+        return date_for_date
 
     def run(self):
 
@@ -116,33 +84,36 @@ class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         self._log_import_started(title=log_title)
 
-        day_end_time = self._get_day_end_time()
-        self._log_day_end_time(day_end_time)
+        days_to_check = self._config.get("days_to_check")
+        date_to_check = self._current_datetime.replace(hour=0, minute=0, second=0)
 
-        new_rates_date = self._get_new_rates_date(day_end_time)
-        self._log_new_rates_date(new_rates_date)
+        changed_rates_number = 0
 
-        parsing_results = self._parse_bank_page(new_rates_date)
+        while days_to_check > 0:
 
-        if parsing_results is not None:
+            self._logger.debug(f"DATE TO CHECK: {date_to_check:%Y-%m-%d}")
+            self._logger.debug(f"DAYS TO CHECK: {days_to_check}")
 
-            exchange_rates, unknown_currencies = parsing_results
+            data_for_date = self._parse_rates_for_date(date_to_check)
 
-            self._unknown_currencies_warning(unknown_currencies)
+            if data_for_date is not None:
 
-            changed_rates_number = self._process_currency_rates_to_import(
-                exchange_rates
-            )
+                exchange_rates, unknown_currencies = data_for_date
 
-            self._db.insert_import_date(self._current_datetime)
+                self._unknown_currencies_warning(unknown_currencies)
 
-            self._log_import_completed(
-                title=log_title, changed_rates_number=changed_rates_number
-            )
+                changed_rates_number += self._process_currency_rates_to_import(
+                    exchange_rates
+                )
 
-        else:
+                self._db.insert_import_date(self._current_datetime)
 
-            self._log_import_failed(title=log_title)
+            days_to_check -= 1
+            date_to_check -= datetime.timedelta(days=1)
+
+        self._log_import_completed(
+            title=log_title, changed_rates_number=changed_rates_number
+        )
 
         self._db.disconnect()
 

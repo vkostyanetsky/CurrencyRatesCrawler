@@ -296,11 +296,10 @@ class UAExchangeRatesCrawler:
 
                 response = self._session.get(request_url, headers=headers)
 
-                self._logger.debug(
-                    "Response status code: {}, text:\n{}".format(
-                        response.status_code, response.text
-                    )
-                )
+                self._logger.debug(f'Response status code: {response.status_code}')
+
+                if self._config.get('log_response_text'):
+                    self._logger.debug(response.text)
 
                 break
 

@@ -4,7 +4,7 @@
 
 ### Added
 
-* The bank began to show date of updating exchange rates. So, from this version, the `load_current.py` script tries to find the date and decide whether it is required to load rates into the database the data or not.   
+* Support for a new bank's webservice to get currency rates.
 
 ## 1.0.0 - 2022-08-19
 
