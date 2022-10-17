@@ -12,6 +12,7 @@ import os
 import re
 import shutil
 import ssl
+import datetime
 
 import pandas
 import requests
@@ -89,13 +90,12 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
                 continue
 
             rate_date = self.get_datetime_from_date(date_column[index])
-            rate_date = self.get_rate_date(rate_date)
 
             currency_rates.append(
                 {
                     "currency_code": currency_code,
                     "import_date": self._current_datetime,
-                    "rate_date": rate_date,
+                    "rate_date": rate_date + datetime.timedelta(days=1),
                     "rate": float(rate_column[index]),
                 }
             )
@@ -170,21 +170,11 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
     def run(self):
 
-        """It seems like a not optimal way to avoid CERTIFICATE_VERIFY_FAILED, but it works.
+        ssl_ctx = ssl.create_default_context()
+        ssl_ctx.check_hostname = False
+        ssl_ctx.verify_mode = ssl.CERT_NONE
 
-        Probably creating SSL context via create_default_context() is more appropriate:
-
-            ssl_ctx = ssl.create_default_context()
-            ssl_ctx.check_hostname = False
-            ssl_ctx.verify_mode = ssl.CERT_NONE
-
-        However, I didn't find out how to apply this to read_excel().
-        """
-        ssl._create_default_https_context = (
-            ssl._create_unverified_context
-        )  # TODO fix the cert
-
-        log_title = "import of historical exchange rates"
+        log_title = 'import of historical exchange rates'
 
         self._log_import_started(log_title)
 
@@ -197,13 +187,10 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
             for link_to_file in links_to_files:
 
                 currency_rates = self._currency_rates_from_file(link_to_file)
-                self._logger.debug(
-                    "Crawling results: %d rate(s).", len(currency_rates)
-                )
 
-                changed_rates_number += self._process_currency_rates_to_import(
-                    currency_rates
-                )
+                self._logger.debug("Crawling results: %d rate(s).", len(currency_rates))
+
+                changed_rates_number += self._process_currency_rates_to_import(currency_rates)
 
             self._db.insert_import_date(self._current_datetime)
 

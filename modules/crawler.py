@@ -238,15 +238,6 @@ class UAExchangeRatesCrawler:
 
         return self._config["currency_codes"].get(currency_presentation)
 
-    def get_rate_date(self, source_date: datetime.datetime) -> datetime.datetime:
-
-        date_delta = datetime.timedelta(days=self._config["number_of_days_to_add"])
-
-        return (
-            datetime.datetime(source_date.year, source_date.month, source_date.day)
-            + date_delta
-        )
-
     def _unknown_currencies_warning(self, unknown_currencies: list) -> None:
 
         if len(unknown_currencies) > 0:

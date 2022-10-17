@@ -12,7 +12,6 @@ mongodb_max_delay: 5
 # - EUR
 #
 currency_codes_filter:
-  - USD
   - EUR
 
 # This options defines how many days (including the current one)
