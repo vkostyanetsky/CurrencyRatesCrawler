@@ -100,23 +100,16 @@ class UAExchangeRatesCrawler:
         event_import_date = self.get_import_date_as_string()
         event_description = self._description_of_rates_changed(changed_rates_number)
 
+        self._logger.info(
+            f"{event_title} started at {event_datetime} is completed. {event_description}"
+        )
+
         logs_url = self._get_logs_url(event_import_date)
 
         if logs_url != "":
+
             self._logger.info(
-                '{} started at {} (<a href="{}">{}</a>) is completed. {}'.format(
-                    event_title,
-                    event_datetime,
-                    logs_url,
-                    event_import_date,
-                    event_description,
-                )
-            )
-        else:
-            self._logger.info(
-                "{} started at {} ({}) is completed. {}".format(
-                    event_title, event_datetime, event_import_date, event_description
-                )
+                f'Logs of the session: <a href="{logs_url}">{event_import_date}</a>'
             )
 
     def _get_config(self) -> dict:
