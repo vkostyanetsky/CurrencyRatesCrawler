@@ -9,6 +9,7 @@ file in the same directory.
 """
 
 import datetime
+
 from bs4 import BeautifulSoup
 
 from modules.crawler import UAExchangeRatesCrawler

@@ -65,10 +65,10 @@ class UAExchangeRatesCrawler:
         return self._current_datetime.strftime("%Y%m%d%H%M%S")
 
     def _log_import_started(self, title: str) -> None:
-        time_as_string = self.get_time_as_string(self._current_datetime)
-        import_date_as_string = self.get_import_date_as_string()
+        time = self.get_time_as_string(self._current_datetime)
+        import_date = self.get_import_date_as_string()
 
-        message = f"{title.capitalize()} started at {time_as_string} ({import_date_as_string})."
+        message = f"{title.capitalize()} started at {time} ({import_date})."
 
         self._logger.debug(message)
 
@@ -287,9 +287,9 @@ class UAExchangeRatesCrawler:
 
                 response = self._session.get(request_url, headers=headers)
 
-                self._logger.debug(f'Response status code: {response.status_code}')
+                self._logger.debug(f"Response status code: {response.status_code}")
 
-                if self._config.get('log_response_text'):
+                if self._config.get("log_response_text"):
                     self._logger.debug(response.text)
 
                 break
@@ -353,7 +353,8 @@ class UAExchangeRatesCrawler:
             data_presentation = "\n".join(presentations)
 
             self._logger.info(
-                f"Summary of changed rates on {date_presentation}:\n<pre>\n{data_presentation}\n</pre>"
+                f"Summary of changed rates"
+                f" on {date_presentation}:\n<pre>\n{data_presentation}\n</pre>"
             )
 
     @staticmethod

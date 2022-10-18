@@ -7,12 +7,12 @@ It has no arguments, but can be customized via the config.yaml file
 in the same directory.
 """
 
+import datetime
 import hashlib
 import os
 import re
 import shutil
 import ssl
-import datetime
 
 import pandas
 import requests
@@ -49,7 +49,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         self._logger.debug("Attempting to find links to Excel files...")
 
-        page_url = 'https://www.centralbank.ae/en/forex-eibor/exchange-rates/'
+        page_url = "https://www.centralbank.ae/en/forex-eibor/exchange-rates/"
         response = self._get_response_for_request(page_url)
 
         if response is not None:
@@ -150,7 +150,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
                     "since the last processing (%s), "
                     "because a previous file hash "
                     "is equal to the current one.",
-                    self.date_with_time_as_string(historical_file["import_date"])
+                    self.date_with_time_as_string(historical_file["import_date"]),
                 )
 
             if load:
@@ -174,7 +174,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
         ssl_ctx.check_hostname = False
         ssl_ctx.verify_mode = ssl.CERT_NONE
 
-        log_title = 'import of historical exchange rates'
+        log_title = "import of historical exchange rates"
 
         self._log_import_started(log_title)
 
@@ -190,7 +190,9 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
                 self._logger.debug("Crawling results: %d rate(s).", len(currency_rates))
 
-                changed_rates_number += self._process_currency_rates_to_import(currency_rates)
+                changed_rates_number += self._process_currency_rates_to_import(
+                    currency_rates
+                )
 
             self._db.insert_import_date(self._current_datetime)
 

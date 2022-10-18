@@ -60,10 +60,10 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
         if currency_code not in self.get_currency_codes():
 
-            return self.get_error_response(
-                code=4,
-                message=f'Exchange rates for the currency code "{currency_code}" cannot be found at UAE CB.',
-            )
+            message = f'Exchange rates for the currency code' \
+                      f' "{currency_code}" cannot be found at UAE CB.'
+
+            return self.get_error_response(code=4, message=message)
 
         else:
 
