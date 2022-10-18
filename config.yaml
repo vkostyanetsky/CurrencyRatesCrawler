@@ -12,6 +12,7 @@ mongodb_max_delay: 5
 # - EUR
 #
 currency_codes_filter:
+  - USD
   - EUR
 
 # This options defines how many days (including the current one)
@@ -24,7 +25,7 @@ currency_codes_filter:
 # - 2022-10-16
 # - 2022-10-15
 #
-days_to_check: 4
+days_to_check: 7
 
 # Integration parameters for Telegram.
 #
@@ -32,9 +33,10 @@ telegram_bot_api_token: ""
 telegram_chat_id: 0
 
 # Enable this option if you want to see text of bank's website responses
-# in log entries.
+# in log entries. Possible values: true (enable), false (disable).
 #
-# A purpose of the feature is debugging, so you may leave it blank.
+# A purpose of the feature is debugging, so usually you don't need
+# to enable this.
 #
 log_response_text: false
 
@@ -218,4 +220,3 @@ currency_codes:
   "Syrian pound": SYP
   "Turkmen manat": TMT
   "Uzbekistani som": UZS
-
