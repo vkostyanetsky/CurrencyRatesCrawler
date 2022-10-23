@@ -1,7 +1,18 @@
 import datetime
+import enum
 
 import pymongo.database
 import pymongo.mongo_client
+
+
+class Event(enum.Enum):
+    """Enumeration of application's events."""
+
+    NONE = "NONE"
+    CURRENT_RATES_LOADING = "CURRENT_RATES_LOADING"
+    HISTORICAL_RATES_LOADING = "HISTORICAL_RATES_LOADING"
+    CURRENT_RATES_UPDATING = "CURRENT_RATES_UPDATING"
+    HISTORICAL_RATES_UPDATING = "HISTORICAL_RATES_UPDATING"
 
 
 class UAExchangeRatesCrawlerDB:
@@ -10,6 +21,7 @@ class UAExchangeRatesCrawlerDB:
     __HISTORICAL_FILES_COLLECTION: pymongo.collection = None
     __CURRENCY_RATES_COLLECTION: pymongo.collection = None
     __IMPORT_DATES_COLLECTION: pymongo.collection = None
+    __EVENTS_COLLECTION: pymongo.collection = None
     __LOGS_COLLECTION: pymongo.collection = None
 
     def __init__(self, config: dict):
@@ -24,6 +36,7 @@ class UAExchangeRatesCrawlerDB:
         self.__HISTORICAL_FILES_COLLECTION = self.__DATABASE["historical_files"]
         self.__CURRENCY_RATES_COLLECTION = self.__DATABASE["currency_rates"]
         self.__IMPORT_DATES_COLLECTION = self.__DATABASE["import_dates"]
+        self.__EVENTS_COLLECTION = self.__DATABASE["events"]
         self.__LOGS_COLLECTION = self.__DATABASE["logs"]
 
     def disconnect(self):
@@ -186,3 +199,57 @@ class UAExchangeRatesCrawlerDB:
 
     def insert_import_date(self, date):
         self.__IMPORT_DATES_COLLECTION.insert_one({"date": date})
+
+    def insert_event_rates_updating(
+        self,
+        event: Event,
+        currency_code: str,
+        rate_date: datetime.datetime,
+        rate_initial: str,
+        rate_current: str,
+    ):
+
+        self.__EVENTS_COLLECTION.insert_one(
+            {
+                "event_name": event.value,
+                "event_date": datetime.datetime.now(),
+                "currency_code": currency_code,
+                "rate_date": rate_date,
+                "rate_initial": rate_initial,
+                "rate_current": rate_current,
+            }
+        )
+
+    def insert_event_rates_loading(self, event: Event):
+
+        self.__EVENTS_COLLECTION.insert_one(
+            {
+                "event_name": event.value,
+                "event_date": datetime.datetime.now(),
+            }
+        )
+
+    def get_last_event(self, event: Event):
+
+        query_filter = {"event_name": event.value}
+        query_fields = {"_id": 0, "event_name": 0}
+
+        return self.__EVENTS_COLLECTION.find_one(
+            query_filter, query_fields, sort=[("event_date", -1)]
+        )
+
+    def get_last_rates_updating_event(
+        self, event: Event, date: datetime.datetime, currency_code: str
+    ):
+
+        query_filter = {
+            "event_name": {"$eq": event.value},
+            "event_date": {"$gte": date, "$lt": date + datetime.timedelta(days=1)},
+            "currency_code": {"$eq": currency_code},
+        }
+
+        query_fields = {"_id": 0, "event_name": 0}
+
+        return self.__EVENTS_COLLECTION.find_one(
+            query_filter, query_fields, sort=[("event_date", -1)]
+        )

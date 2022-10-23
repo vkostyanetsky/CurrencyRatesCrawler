@@ -13,6 +13,7 @@ import datetime
 from bs4 import BeautifulSoup
 
 from modules.crawler import UAExchangeRatesCrawler
+from modules.db import Event
 
 
 class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
@@ -83,7 +84,7 @@ class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         log_title = "import of current exchange rates"
 
-        self._log_import_started(title=log_title)
+        self._import_started(title=log_title, event=Event.CURRENT_RATES_LOADING)
 
         days_to_check = self._config.get("days_to_check")
         date_to_check = self._current_datetime.replace(hour=0, minute=0, second=0)
@@ -120,4 +121,4 @@ class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
 
 if __name__ == "__main__":
-    CurrentUAExchangeRatesCrawler(__file__).run()
+    CurrentUAExchangeRatesCrawler(file=__file__, updating_event=Event.CURRENT_RATES_UPDATING).run()

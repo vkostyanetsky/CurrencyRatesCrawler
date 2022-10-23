@@ -5,8 +5,7 @@ import datetime
 from flask import Flask
 from flask_restful import Api, Resource
 
-from modules.crawler import UAExchangeRatesCrawler
-
+from modules.crawler import Event, UAExchangeRatesCrawler
 from version import __version__
 
 
@@ -32,12 +31,112 @@ def get_date(date_as_string):
 
 class CrawlerHTTPService(UAExchangeRatesCrawler):
     def __init__(self, file):
-        super().__init__(file)
+        super().__init__(file, updating_event=Event.NONE)
 
     def get_error_response_using_date(self, date):
         return self.get_error_response(
             code=3, message=f"Unable to parse a date: {date}"
         )
+
+    def _fill_current_rates_loading_heartbeat(self, heartbeat: dict):
+
+        event_lifespan = self._config.get(
+            "heartbeat_current_rates_loading_event_lifespan"
+        )
+        last_event = self._db.get_last_event(Event.CURRENT_RATES_LOADING)
+
+        if last_event is not None:
+
+            last_event_ttl = round(
+                event_lifespan
+                - (datetime.datetime.now() - last_event["event_date"]).total_seconds()
+            )
+            last_event_date = last_event["event_date"].strftime("%Y-%m-%dT%H:%M:%S")
+
+            if last_event_ttl < 0:
+                heartbeat["warnings"].append(
+                    f"The last current rates loading event appeared more than {event_lifespan} seconds before."
+                )
+
+        else:
+
+            last_event_date = None
+            last_event_ttl = None
+
+            heartbeat["warnings"].append(
+                "The last current rates loading event is not found."
+            )
+
+        heartbeat["last_current_rates_loading_event_date"] = last_event_date
+        heartbeat["last_current_rates_loading_event_ttl"] = last_event_ttl
+
+    def _fill_current_rates_updating_heartbeat(self, heartbeat: dict):
+        def get_last_weekday():
+            date = datetime.datetime.today()
+            date -= datetime.timedelta(days=1)
+            while date.weekday() > 4:
+                date -= datetime.timedelta(days=1)
+            return date
+
+        events = {}
+        last_weekday = get_last_weekday()
+        currency_codes = self.get_currency_codes()
+
+        for currency_code in currency_codes:
+            event = self._db.get_last_rates_updating_event(
+                Event.CURRENT_RATES_UPDATING, last_weekday, currency_code
+            )
+            if event is not None:
+                events[currency_code] = event["rate_current"]
+            else:
+                heartbeat["warnings"].append(
+                    f"{currency_code} current rates updating event for the last weekday is not found."
+                )
+
+        heartbeat["current_rates_updating_events_for_last_weekday"] = events
+
+    def _fill_historical_rates_loading_heartbeat(self, heartbeat: dict):
+
+        event_lifespan = self._config.get(
+            "heartbeat_historical_rates_loading_event_lifespan"
+        )
+        last_event = self._db.get_last_event(Event.HISTORICAL_RATES_LOADING)
+
+        if last_event is not None:
+
+            last_event_ttl = round(
+                event_lifespan
+                - (datetime.datetime.now() - last_event["event_date"]).total_seconds()
+            )
+            last_event_date = last_event["event_date"].strftime("%Y-%m-%dT%H:%M:%S")
+
+            if last_event_ttl < 0:
+                heartbeat["warnings"].append(
+                    f"The last historical rates loading event appeared more than {event_lifespan} seconds before."
+                )
+
+        else:
+
+            last_event_date = None
+            last_event_ttl = None
+
+            heartbeat["warnings"].append(
+                "The last historical rates loading event is not found."
+            )
+
+        heartbeat["last_historical_rates_loading_event_date"] = last_event_date
+        heartbeat["last_historical_rates_loading_event_ttl"] = last_event_ttl
+
+    def get_heartbeat(self) -> tuple:
+
+        heartbeat = {"warnings": []}
+
+        self._fill_current_rates_loading_heartbeat(heartbeat)
+        self._fill_current_rates_updating_heartbeat(heartbeat)
+
+        self._fill_historical_rates_loading_heartbeat(heartbeat)
+
+        return heartbeat, len(heartbeat["warnings"]) == 0
 
     @staticmethod
     def get_error_response(code, message):
@@ -46,7 +145,7 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
         return data, 200
 
     def get_currency_codes(self) -> list:
-        return list(self._config["currency_codes"].values())
+        return list(set(list(self._config["currency_codes"].values())))
 
     def get_currency_rates(
         self,
@@ -60,8 +159,10 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
         if currency_code not in self.get_currency_codes():
 
-            message = f'Exchange rates for the currency code' \
-                      f' "{currency_code}" cannot be found at UAE CB.'
+            message = (
+                f"Exchange rates for the currency code"
+                f' "{currency_code}" cannot be found at UAE CB.'
+            )
 
             return self.get_error_response(code=4, message=message)
 
@@ -208,6 +309,15 @@ class LogsUsingImportDate(Resource):
         return crawler.get_logs(import_date)
 
 
+class Heartbeat(Resource):
+    @staticmethod
+    def get():
+
+        details, success = crawler.get_heartbeat()
+
+        return details, 200 if success else 500
+
+
 crawler = CrawlerHTTPService(__file__)
 
 app = Flask(__name__)
@@ -236,6 +346,8 @@ api.add_resource(
     RatesUsingCurrencyCodeAndImportDateAndStartDateAndEndDate,
     "/rates/<currency_code>/<import_date>/<start_date>/<end_date>/",
 )
+
+api.add_resource(Heartbeat, "/heartbeat/")
 
 api_endpoint_to_get_logs = crawler.get_config_value("api_endpoint_to_get_logs")
 
