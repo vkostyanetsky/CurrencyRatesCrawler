@@ -5,11 +5,8 @@ import datetime
 from flask import Flask
 from flask_restful import Api, Resource
 
-from modules.crawler import UAExchangeRatesCrawler
-
+from modules.crawler import Event, UAExchangeRatesCrawler
 from version import __version__
-
-from modules.crawler import Event
 
 
 def get_date(date_as_string):
@@ -43,13 +40,18 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
     def _fill_current_rates_loading_heartbeat(self, heartbeat: dict):
 
-        event_lifespan = self._config.get("heartbeat_current_rates_loading_event_lifespan")
+        event_lifespan = self._config.get(
+            "heartbeat_current_rates_loading_event_lifespan"
+        )
         last_event = self._db.get_last_event(Event.CURRENT_RATES_LOADING)
 
         if last_event is not None:
 
-            last_event_ttl = round(event_lifespan - (datetime.datetime.now() - last_event["event_date"]).total_seconds())
-            last_event_date = last_event["event_date"].strftime("%Y-%m-%dT%H-%M-%S")
+            last_event_ttl = round(
+                event_lifespan
+                - (datetime.datetime.now() - last_event["event_date"]).total_seconds()
+            )
+            last_event_date = last_event["event_date"].strftime("%Y-%m-%dT%H:%M:%S")
 
             if last_event_ttl < 0:
                 heartbeat["warnings"].append(
@@ -68,15 +70,45 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
         heartbeat["last_current_rates_loading_event_date"] = last_event_date
         heartbeat["last_current_rates_loading_event_ttl"] = last_event_ttl
 
+    def _fill_current_rates_updating_heartbeat(self, heartbeat: dict):
+        def get_last_weekday():
+            date = datetime.datetime.today()
+            date -= datetime.timedelta(days=1)
+            while date.weekday() > 4:
+                date -= datetime.timedelta(days=1)
+            return date
+
+        events = {}
+        last_weekday = get_last_weekday()
+        currency_codes = self.get_currency_codes()
+
+        for currency_code in currency_codes:
+            event = self._db.get_last_rates_updating_event(
+                Event.CURRENT_RATES_UPDATING, last_weekday, currency_code
+            )
+            if event is not None:
+                events[currency_code] = event["rate_current"]
+            else:
+                heartbeat["warnings"].append(
+                    f"{currency_code} current rates updating event for the last weekday is not found."
+                )
+
+        heartbeat["current_rates_updating_events_for_last_weekday"] = events
+
     def _fill_historical_rates_loading_heartbeat(self, heartbeat: dict):
 
-        event_lifespan = self._config.get("heartbeat_historical_rates_loading_event_lifespan")
+        event_lifespan = self._config.get(
+            "heartbeat_historical_rates_loading_event_lifespan"
+        )
         last_event = self._db.get_last_event(Event.HISTORICAL_RATES_LOADING)
 
         if last_event is not None:
 
-            last_event_ttl = round(event_lifespan - (datetime.datetime.now() - last_event["event_date"]).total_seconds())
-            last_event_date = last_event["event_date"].strftime("%Y-%m-%dT%H-%M-%S")
+            last_event_ttl = round(
+                event_lifespan
+                - (datetime.datetime.now() - last_event["event_date"]).total_seconds()
+            )
+            last_event_date = last_event["event_date"].strftime("%Y-%m-%dT%H:%M:%S")
 
             if last_event_ttl < 0:
                 heartbeat["warnings"].append(
@@ -100,6 +132,8 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
         heartbeat = {"warnings": []}
 
         self._fill_current_rates_loading_heartbeat(heartbeat)
+        self._fill_current_rates_updating_heartbeat(heartbeat)
+
         self._fill_historical_rates_loading_heartbeat(heartbeat)
 
         return heartbeat, len(heartbeat["warnings"]) == 0
@@ -111,7 +145,7 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
         return data, 200
 
     def get_currency_codes(self) -> list:
-        return list(self._config["currency_codes"].values())
+        return list(set(list(self._config["currency_codes"].values())))
 
     def get_currency_rates(
         self,

@@ -1,9 +1,8 @@
 import datetime
+import enum
 
 import pymongo.database
 import pymongo.mongo_client
-
-import enum
 
 
 class Event(enum.Enum):
@@ -201,27 +200,56 @@ class UAExchangeRatesCrawlerDB:
     def insert_import_date(self, date):
         self.__IMPORT_DATES_COLLECTION.insert_one({"date": date})
 
-    def insert_event_rates_updating(self, event: Event, currency_code: str, rate_date: datetime.datetime, rate_initial: str, rate_current: str):
+    def insert_event_rates_updating(
+        self,
+        event: Event,
+        currency_code: str,
+        rate_date: datetime.datetime,
+        rate_initial: str,
+        rate_current: str,
+    ):
 
-        self.__EVENTS_COLLECTION.insert_one({
-            "event_name": event.value,
-            "event_date": datetime.datetime.now(),
-            "currency_code": currency_code,
-            "rate_date": rate_date,
-            "rate_initial": rate_initial,
-            "rate_current": rate_current,
-        })
+        self.__EVENTS_COLLECTION.insert_one(
+            {
+                "event_name": event.value,
+                "event_date": datetime.datetime.now(),
+                "currency_code": currency_code,
+                "rate_date": rate_date,
+                "rate_initial": rate_initial,
+                "rate_current": rate_current,
+            }
+        )
 
     def insert_event_rates_loading(self, event: Event):
 
-        self.__EVENTS_COLLECTION.insert_one({
-            "event_name": event.value,
-            "event_date": datetime.datetime.now(),
-        })
+        self.__EVENTS_COLLECTION.insert_one(
+            {
+                "event_name": event.value,
+                "event_date": datetime.datetime.now(),
+            }
+        )
 
     def get_last_event(self, event: Event):
 
         query_filter = {"event_name": event.value}
         query_fields = {"_id": 0, "event_name": 0}
 
-        return self.__EVENTS_COLLECTION.find_one(query_filter, query_fields, sort=[("event_date", -1)])
+        return self.__EVENTS_COLLECTION.find_one(
+            query_filter, query_fields, sort=[("event_date", -1)]
+        )
+
+    def get_last_rates_updating_event(
+        self, event: Event, date: datetime.datetime, currency_code: str
+    ):
+
+        query_filter = {
+            "event_name": {"$eq": event.value},
+            "event_date": {"$gte": date, "$lt": date + datetime.timedelta(days=1)},
+            "currency_code": {"$eq": currency_code},
+        }
+
+        query_fields = {"_id": 0, "event_name": 0}
+
+        return self.__EVENTS_COLLECTION.find_one(
+            query_filter, query_fields, sort=[("event_date", -1)]
+        )
