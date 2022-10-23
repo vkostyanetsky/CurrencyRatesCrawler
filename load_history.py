@@ -18,15 +18,16 @@ import pandas
 import requests
 from bs4 import BeautifulSoup
 
+from modules.db import Event
 from modules.crawler import UAExchangeRatesCrawler
 
 
 class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
     __historical_files_directory: str = ""
 
-    def __init__(self, file):
+    def __init__(self, file, updating_event):
 
-        super().__init__(file)
+        super().__init__(file, updating_event)
 
         self._init_historical_files_directory()
 
@@ -176,7 +177,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         log_title = "import of historical exchange rates"
 
-        self._log_import_started(log_title)
+        self._import_started(log_title, event=Event.HISTORICAL_RATES_LOADING)
 
         links_to_files = self._get_links_to_files()
 
@@ -250,4 +251,4 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
 
 if __name__ == "__main__":
-    HistoricalUAExchangeRatesCrawler(__file__).run()
+    HistoricalUAExchangeRatesCrawler(file=__file__, updating_event=Event.HISTORICAL_RATES_UPDATING).run()

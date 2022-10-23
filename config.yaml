@@ -55,6 +55,16 @@ api_url: ""
 #
 api_endpoint_to_get_logs: ""
 
+# Lifespan of the current rates event loading in seconds. If no event
+# appears after limit is reached, heartbeat warns you.
+#
+heartbeat_current_rates_loading_event_lifespan: 5400
+
+# Lifespan of the historical rates event loading in seconds. If no event
+# appears after limit is reached, heartbeat warns you.
+#
+heartbeat_historical_rates_loading_event_lifespan: 129600
+
 # A value of the User-Agent HTTP header that crawler will use
 # making requests to the bank website.
 #

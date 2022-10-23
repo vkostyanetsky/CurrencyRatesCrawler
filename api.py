@@ -9,6 +9,8 @@ from modules.crawler import UAExchangeRatesCrawler
 
 from version import __version__
 
+from modules.crawler import Event
+
 
 def get_date(date_as_string):
     year = int(date_as_string[:4])
@@ -32,12 +34,75 @@ def get_date(date_as_string):
 
 class CrawlerHTTPService(UAExchangeRatesCrawler):
     def __init__(self, file):
-        super().__init__(file)
+        super().__init__(file, updating_event=Event.NONE)
 
     def get_error_response_using_date(self, date):
         return self.get_error_response(
             code=3, message=f"Unable to parse a date: {date}"
         )
+
+    def _fill_current_rates_loading_heartbeat(self, heartbeat: dict):
+
+        event_lifespan = self._config.get("heartbeat_current_rates_loading_event_lifespan")
+        last_event = self._db.get_last_event(Event.CURRENT_RATES_LOADING)
+
+        if last_event is not None:
+
+            last_event_ttl = round(event_lifespan - (datetime.datetime.now() - last_event["event_date"]).total_seconds())
+            last_event_date = last_event["event_date"].strftime("%Y-%m-%dT%H-%M-%S")
+
+            if last_event_ttl < 0:
+                heartbeat["warnings"].append(
+                    f"The last current rates loading event appeared more than {event_lifespan} seconds before."
+                )
+
+        else:
+
+            last_event_date = None
+            last_event_ttl = None
+
+            heartbeat["warnings"].append(
+                "The last current rates loading event is not found."
+            )
+
+        heartbeat["last_current_rates_loading_event_date"] = last_event_date
+        heartbeat["last_current_rates_loading_event_ttl"] = last_event_ttl
+
+    def _fill_historical_rates_loading_heartbeat(self, heartbeat: dict):
+
+        event_lifespan = self._config.get("heartbeat_historical_rates_loading_event_lifespan")
+        last_event = self._db.get_last_event(Event.HISTORICAL_RATES_LOADING)
+
+        if last_event is not None:
+
+            last_event_ttl = round(event_lifespan - (datetime.datetime.now() - last_event["event_date"]).total_seconds())
+            last_event_date = last_event["event_date"].strftime("%Y-%m-%dT%H-%M-%S")
+
+            if last_event_ttl < 0:
+                heartbeat["warnings"].append(
+                    f"The last historical rates loading event appeared more than {event_lifespan} seconds before."
+                )
+
+        else:
+
+            last_event_date = None
+            last_event_ttl = None
+
+            heartbeat["warnings"].append(
+                "The last historical rates loading event is not found."
+            )
+
+        heartbeat["last_historical_rates_loading_event_date"] = last_event_date
+        heartbeat["last_historical_rates_loading_event_ttl"] = last_event_ttl
+
+    def get_heartbeat(self) -> tuple:
+
+        heartbeat = {"warnings": []}
+
+        self._fill_current_rates_loading_heartbeat(heartbeat)
+        self._fill_historical_rates_loading_heartbeat(heartbeat)
+
+        return heartbeat, len(heartbeat["warnings"]) == 0
 
     @staticmethod
     def get_error_response(code, message):
@@ -60,8 +125,10 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
         if currency_code not in self.get_currency_codes():
 
-            message = f'Exchange rates for the currency code' \
-                      f' "{currency_code}" cannot be found at UAE CB.'
+            message = (
+                f"Exchange rates for the currency code"
+                f' "{currency_code}" cannot be found at UAE CB.'
+            )
 
             return self.get_error_response(code=4, message=message)
 
@@ -208,6 +275,15 @@ class LogsUsingImportDate(Resource):
         return crawler.get_logs(import_date)
 
 
+class Heartbeat(Resource):
+    @staticmethod
+    def get():
+
+        details, success = crawler.get_heartbeat()
+
+        return details, 200 if success else 500
+
+
 crawler = CrawlerHTTPService(__file__)
 
 app = Flask(__name__)
@@ -236,6 +312,8 @@ api.add_resource(
     RatesUsingCurrencyCodeAndImportDateAndStartDateAndEndDate,
     "/rates/<currency_code>/<import_date>/<start_date>/<end_date>/",
 )
+
+api.add_resource(Heartbeat, "/heartbeat/")
 
 api_endpoint_to_get_logs = crawler.get_config_value("api_endpoint_to_get_logs")
 

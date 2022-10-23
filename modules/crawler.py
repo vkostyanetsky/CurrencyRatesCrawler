@@ -10,6 +10,8 @@ Basic crawler class. Contains core functionality for a working prototype:
 - logger instance
 """
 
+from modules.db import Event
+
 import datetime
 import os
 from itertools import groupby
@@ -32,8 +34,9 @@ class UAExchangeRatesCrawler:
     _logger: Logger
     _db: UAExchangeRatesCrawlerDB
     _session: requests.sessions.Session = requests.session()
+    _updating_event: Event
 
-    def __init__(self, file) -> None:
+    def __init__(self, file, updating_event: Event) -> None:
 
         self._current_directory = os.path.abspath(os.path.dirname(file))
         self._current_datetime = UAExchangeRatesCrawler.get_beginning_of_this_second()
@@ -45,6 +48,8 @@ class UAExchangeRatesCrawler:
         self._logger = modules.logger.get_logger(
             os.path.basename(file), self._config, self._current_datetime, self._db
         )
+
+        self._updating_event = updating_event
 
         self._logger.debug("Crawler initialized.")
 
@@ -64,13 +69,15 @@ class UAExchangeRatesCrawler:
     def get_import_date_as_string(self) -> str:
         return self._current_datetime.strftime("%Y%m%d%H%M%S")
 
-    def _log_import_started(self, title: str) -> None:
+    def _import_started(self, title: str, event: Event) -> None:
         time = self.get_time_as_string(self._current_datetime)
         import_date = self.get_import_date_as_string()
 
         message = f"{title.capitalize()} started at {time} ({import_date})."
 
         self._logger.debug(message)
+
+        self._db.insert_event_rates_loading(event)
 
     def _log_import_failed(self, title: str):
 
@@ -341,6 +348,8 @@ class UAExchangeRatesCrawler:
 
                 presentation = f"{currency_code}: {rate_initial} → {rate_current}"
                 presentations.append(presentation)
+
+                self._db.insert_event_rates_updating(self._updating_event, currency_code, date, rate_initial, rate_current)
 
             date_presentation = self._get_date_as_string(date)
             data_presentation = "\n".join(presentations)
