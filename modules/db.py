@@ -239,12 +239,12 @@ class UAExchangeRatesCrawlerDB:
         )
 
     def get_last_rates_updating_event(
-        self, event: Event, date: datetime.datetime, currency_code: str
+        self, event: Event, start_date: datetime.datetime, end_date: datetime.datetime, currency_code: str
     ):
 
         query_filter = {
             "event_name": {"$eq": event.value},
-            "event_date": {"$gte": date, "$lt": date + datetime.timedelta(days=1)},
+            "event_date": {"$gte": start_date, "$lt": end_date},
             "currency_code": {"$eq": currency_code},
         }
 
