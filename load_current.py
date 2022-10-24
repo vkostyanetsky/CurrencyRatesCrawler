@@ -121,4 +121,6 @@ class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
 
 if __name__ == "__main__":
-    CurrentUAExchangeRatesCrawler(file=__file__, updating_event=Event.CURRENT_RATES_UPDATING).run()
+    CurrentUAExchangeRatesCrawler(
+        file=__file__, updating_event=Event.CURRENT_RATES_UPDATING
+    ).run()
