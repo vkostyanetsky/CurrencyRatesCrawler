@@ -349,7 +349,13 @@ class UAExchangeRatesCrawler:
                 presentation = f"{currency_code}: {rate_initial} → {rate_current}"
                 presentations.append(presentation)
 
-                self._db.insert_event_rates_updating(self._updating_event, currency_code, date, rate_initial, rate_current)
+                self._db.insert_event_rates_updating(
+                    self._updating_event,
+                    currency_code,
+                    date,
+                    rate_initial,
+                    rate_current,
+                )
 
             date_presentation = self._get_date_as_string(date)
             data_presentation = "\n".join(presentations)
