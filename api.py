@@ -55,7 +55,7 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
             if last_event_ttl < 0:
                 heartbeat["warnings"].append(
-                    f"The last current rates loading event appeared more than {event_lifespan} seconds before."
+                    f"The last current rates loading triggered over {event_lifespan} seconds ago."
                 )
 
         else:
@@ -64,7 +64,7 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
             last_event_ttl = None
 
             heartbeat["warnings"].append(
-                "The last current rates loading event is not found."
+                "It is impossible to determine when the last current rates loading has happened."
             )
 
         heartbeat["last_current_rates_loading_event_date"] = last_event_date
@@ -95,7 +95,7 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
         if missing_currencies:
             heartbeat["warnings"].append(
-                f"Unable to find some current rates updating events for the {last_weekday:%Y-%m-%d}."
+                f"At least one currency did not receive current rate update on {last_weekday:%Y-%m-%d}."
             )
 
         heartbeat["last_weekday_date"] = last_weekday.strftime("%Y-%m-%d")
@@ -119,7 +119,7 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
             if last_event_ttl < 0:
                 heartbeat["warnings"].append(
-                    f"The last historical rates loading event appeared more than {event_lifespan} seconds before."
+                    f"The last historical rates loading triggered over {event_lifespan} seconds ago."
                 )
 
         else:
@@ -128,7 +128,7 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
             last_event_ttl = None
 
             heartbeat["warnings"].append(
-                "The last historical rates loading event is not found."
+                "It is impossible to determine when the last historical rates loading has happened."
             )
 
         heartbeat["last_historical_rates_loading_event_date"] = last_event_date
