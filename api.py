@@ -78,7 +78,9 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
                 date -= datetime.timedelta(days=1)
             return date
 
-        events = {}
+        missing_currencies = []
+        updated_currencies = {}
+
         last_weekday = get_last_weekday()
         currency_codes = self.get_currency_codes()
 
@@ -87,14 +89,18 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
                 Event.CURRENT_RATES_UPDATING, last_weekday, currency_code
             )
             if event is not None:
-                events[currency_code] = event["rate_current"]
+                updated_currencies[currency_code] = event["rate_current"]
             else:
-                heartbeat["warnings"].append(
-                    f"{currency_code} current rates updating event for the {last_weekday:%Y-%m-%d} is not found."
-                )
+                missing_currencies.append(currency_code)
+
+        if missing_currencies:
+            heartbeat["warnings"].append(
+                f"Unable to find some current rates updating events for the {last_weekday:%Y-%m-%d}."
+            )
 
         heartbeat["last_weekday_date"] = last_weekday.strftime("%Y-%m-%d")
-        heartbeat["last_weekday_current_rates_updating_events"] = events
+        heartbeat["last_weekday_missing_currencies"] = missing_currencies
+        heartbeat["last_weekday_updated_currencies"] = updated_currencies
 
     def _fill_historical_rates_loading_heartbeat(self, heartbeat: dict):
 
