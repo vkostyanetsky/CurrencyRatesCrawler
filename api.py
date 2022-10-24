@@ -5,7 +5,8 @@ import datetime
 from flask import Flask
 from flask_restful import Api, Resource
 
-from modules.crawler import Event, UAExchangeRatesCrawler
+from modules.crawler import UAExchangeRatesCrawler
+from modules.db import Event
 from version import __version__
 
 
