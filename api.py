@@ -78,29 +78,29 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
                 date -= datetime.timedelta(days=1)
             return date
 
-        missing_currencies = []
-        updated_currencies = {}
+        currencies_without_current_rates = []
+        currencies_with_current_rates = []
 
         last_weekday = get_last_weekday()
         currency_codes = self.get_currency_codes()
 
         for currency_code in currency_codes:
+
             event = self._db.get_last_rates_updating_event(
-                Event.CURRENT_RATES_UPDATING, last_weekday, currency_code
+                event=Event.CURRENT_RATES_UPDATING, start_date=last_weekday, end_date=datetime.datetime.now(), currency_code=currency_code
             )
             if event is not None:
-                updated_currencies[currency_code] = event["rate_current"]
+                currencies_with_current_rates.append(currency_code)
             else:
-                missing_currencies.append(currency_code)
+                currencies_without_current_rates.append(currency_code)
 
-        if missing_currencies:
+        if currencies_without_current_rates:
             heartbeat["warnings"].append(
-                f"At least one currency did not receive current rate update on {last_weekday:%Y-%m-%d}."
+                f"At least one currency did not receive current rate update from {last_weekday:%Y-%m-%d}."
             )
 
-        heartbeat["last_weekday_date"] = last_weekday.strftime("%Y-%m-%d")
-        heartbeat["last_weekday_missing_currencies"] = missing_currencies
-        heartbeat["last_weekday_updated_currencies"] = updated_currencies
+        heartbeat["currencies_with_current_rates"] = currencies_with_current_rates
+        heartbeat["currencies_without_current_rates"] = currencies_without_current_rates
 
     def _fill_historical_rates_loading_heartbeat(self, heartbeat: dict):
 
