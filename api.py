@@ -56,7 +56,8 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
             if last_event_ttl < 0:
                 heartbeat["warnings"].append(
-                    f"The last current rates loading triggered over {event_lifespan} seconds ago."
+                    f"The last current rates loading triggered over {event_lifespan} seconds ago. It looks like the "
+                    f"regular execution of load_current.py doesn't work."
                 )
 
         else:
@@ -65,7 +66,8 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
             last_event_ttl = None
 
             heartbeat["warnings"].append(
-                "It is impossible to determine when the last current rates loading has happened."
+                "Current rates loading has never been triggered. Perhaps this is not a problem (for instance, "
+                "if the application has just been deployed so load_current.py hasn't executed once yet)."
             )
 
         heartbeat["last_current_rates_loading_event_date"] = last_event_date
@@ -88,7 +90,10 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
         for currency_code in currency_codes:
 
             event = self._db.get_last_rates_updating_event(
-                event=Event.CURRENT_RATES_UPDATING, start_date=last_weekday, end_date=datetime.datetime.now(), currency_code=currency_code
+                event=Event.CURRENT_RATES_UPDATING,
+                start_date=last_weekday,
+                end_date=datetime.datetime.now(),
+                currency_code=currency_code,
             )
             if event is not None:
                 currencies_with_current_rates.append(currency_code)
@@ -120,7 +125,8 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
             if last_event_ttl < 0:
                 heartbeat["warnings"].append(
-                    f"The last historical rates loading triggered over {event_lifespan} seconds ago."
+                    f"The last historical rates loading triggered over {event_lifespan} seconds ago. It looks like "
+                    f"the regular execution of load_history.py doesn't work."
                 )
 
         else:
@@ -129,7 +135,8 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
             last_event_ttl = None
 
             heartbeat["warnings"].append(
-                "It is impossible to determine when the last historical rates loading has happened."
+                "Historical rates loading has never been triggered. Perhaps this is not a problem (for instance, "
+                "if the application has just been deployed so load_history.py hasn't executed once yet)."
             )
 
         heartbeat["last_historical_rates_loading_event_date"] = last_event_date
