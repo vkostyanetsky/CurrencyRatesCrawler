@@ -239,7 +239,11 @@ class UAExchangeRatesCrawlerDB:
         )
 
     def get_last_rates_updating_event(
-        self, event: Event, start_date: datetime.datetime, end_date: datetime.datetime, currency_code: str
+        self,
+        event: Event,
+        start_date: datetime.datetime,
+        end_date: datetime.datetime,
+        currency_code: str,
     ):
 
         query_filter = {
