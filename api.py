@@ -160,7 +160,14 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
         return data, 200
 
     def get_currency_codes(self) -> list:
-        return list(set(list(self._config["currency_codes"].values())))
+        """
+        Returns the list of currency codes set in the configuration file.
+        """
+
+        currency_codes_filter = self._config["currency_codes_filter"]
+        currency_codes = self._config["currency_codes"].values()
+
+        return currency_codes_filter if currency_codes_filter else list(set(list(currency_codes)))
 
     def get_currency_rates(
         self,
