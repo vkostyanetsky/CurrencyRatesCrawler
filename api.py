@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import datetime
+import logging
 
 from flask import Flask
 from flask_restful import Api, Resource
@@ -151,6 +152,8 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
         self._fill_historical_rates_loading_heartbeat(heartbeat)
 
+        logging.info("Heartbeat summary: " + str(heartbeat))
+
         return heartbeat, len(heartbeat["warnings"]) == 0
 
     @staticmethod
@@ -225,12 +228,6 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
             data = {"rates": rates, "max_import_date": max_import_date}
 
             return data, 200
-
-    def get_logs(self, import_date: datetime.datetime):
-
-        data = {"logs": self._db.get_logs(import_date)}
-
-        return data, 200
 
 
 class Hello(Resource):
@@ -318,23 +315,6 @@ class RatesUsingCurrencyCodeAndImportDateAndStartDateAndEndDate(Resource):
         )
 
 
-class Logs(Resource):
-    @staticmethod
-    def get():
-        return crawler.get_error_response(code=15, message="No import date specified.")
-
-
-class LogsUsingImportDate(Resource):
-    @staticmethod
-    def get(import_date: str):
-        try:
-            import_date = get_date(import_date)
-        except ValueError:
-            return crawler.get_error_response_using_date(import_date)
-
-        return crawler.get_logs(import_date)
-
-
 class Heartbeat(Resource):
     @staticmethod
     def get():
@@ -374,14 +354,6 @@ api.add_resource(
 )
 
 api.add_resource(Heartbeat, "/heartbeat/")
-
-api_endpoint_to_get_logs = crawler.get_config_value("api_endpoint_to_get_logs")
-
-if api_endpoint_to_get_logs != "":
-
-    api.add_resource(Logs, f"/{api_endpoint_to_get_logs}/")
-
-    api.add_resource(LogsUsingImportDate, f"/{api_endpoint_to_get_logs}/<import_date>/")
 
 if __name__ == "__main__":
     app.run()

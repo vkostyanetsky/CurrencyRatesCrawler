@@ -9,6 +9,7 @@ file in the same directory.
 """
 
 import datetime
+import logging
 
 from bs4 import BeautifulSoup
 
@@ -93,8 +94,8 @@ class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         while days_to_check > 0:
 
-            self._logger.debug(f"DATE TO CHECK: {date_to_check:%Y-%m-%d}")
-            self._logger.debug(f"DAYS TO CHECK: {days_to_check}")
+            logging.debug(f"DATE TO CHECK: {date_to_check:%Y-%m-%d}")
+            logging.debug(f"DAYS TO CHECK: {days_to_check}")
 
             data_for_date = self._parse_rates_for_date(date_to_check)
 

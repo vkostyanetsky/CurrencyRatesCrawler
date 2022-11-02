@@ -9,6 +9,7 @@ in the same directory.
 
 import datetime
 import hashlib
+import logging
 import os
 import re
 import shutil
@@ -18,8 +19,8 @@ import pandas
 import requests
 from bs4 import BeautifulSoup
 
-from modules.db import Event
 from modules.crawler import UAExchangeRatesCrawler
+from modules.db import Event
 
 
 class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
@@ -48,7 +49,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         links = []
 
-        self._logger.debug("Attempting to find links to Excel files...")
+        logging.debug("Attempting to find links to Excel files...")
 
         page_url = "https://www.centralbank.ae/en/forex-eibor/exchange-rates/"
         response = self._get_response_for_request(page_url)
@@ -61,7 +62,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
             for tag in tags:
                 links.append(f'https://www.centralbank.ae{tag.get("href")}')
 
-            self._logger.debug("Search results: %d link(s).", len(links))
+            logging.debug("Search results: %d link(s).", len(links))
 
         return links
 
@@ -107,7 +108,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         currency_rates = []
 
-        self._logger.debug("LINK TO PROCESS: %s", file_link)
+        logging.debug("LINK TO PROCESS: %s", file_link)
 
         file_path = self.__file_path_in_historical_files_directory(file_link)
 
@@ -115,7 +116,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
             file_hash = self.__file_hash(file_path)
 
-            self._logger.debug("Downloaded file hash: %s", file_hash)
+            logging.debug("Downloaded file hash: %s", file_hash)
 
             historical_file = self._db.historical_file(file_link)
 
@@ -123,7 +124,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
             if historical_file is None:
 
-                self._logger.debug(
+                logging.debug(
                     "The file hasn't been processed before "
                     "(unable to find a previous file hash in the database)."
                 )
@@ -132,7 +133,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
             elif historical_file["hash"] != file_hash:
 
-                self._logger.debug(
+                logging.debug(
                     "The file has been updated "
                     "since the last processing ({}), "
                     "because previous file hash ({}) "
@@ -146,7 +147,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
             else:
 
-                self._logger.debug(
+                logging.debug(
                     "The file hasn't been updated "
                     "since the last processing (%s), "
                     "because a previous file hash "
@@ -189,7 +190,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
                 currency_rates = self._currency_rates_from_file(link_to_file)
 
-                self._logger.debug("Crawling results: %d rate(s).", len(currency_rates))
+                logging.debug("Crawling results: %d rate(s).", len(currency_rates))
 
                 changed_rates_number += self._process_currency_rates_to_import(
                     currency_rates
@@ -222,7 +223,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
             attempt_number += 1
 
-            self._logger.debug("Attempt #%d to download the file...", attempt_number)
+            logging.debug("Attempt #%d to download the file...", attempt_number)
 
             try:
 
@@ -231,10 +232,10 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
                         shutil.copyfileobj(response.raw, file)
                         file_is_downloaded = True
             except (requests.exceptions.RequestException, shutil.Error) as exception:
-                self._logger.error(exception)
+                logging.error(exception)
 
         if not file_is_downloaded:
-            self._logger.debug("Unable to download the file!")
+            logging.debug("Unable to download the file!")
             file_path = None
 
         return file_path

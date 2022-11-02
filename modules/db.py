@@ -22,7 +22,6 @@ class UAExchangeRatesCrawlerDB:
     __CURRENCY_RATES_COLLECTION: pymongo.collection = None
     __IMPORT_DATES_COLLECTION: pymongo.collection = None
     __EVENTS_COLLECTION: pymongo.collection = None
-    __LOGS_COLLECTION: pymongo.collection = None
 
     def __init__(self, config: dict):
 
@@ -37,7 +36,6 @@ class UAExchangeRatesCrawlerDB:
         self.__CURRENCY_RATES_COLLECTION = self.__DATABASE["currency_rates"]
         self.__IMPORT_DATES_COLLECTION = self.__DATABASE["import_dates"]
         self.__EVENTS_COLLECTION = self.__DATABASE["events"]
-        self.__LOGS_COLLECTION = self.__DATABASE["logs"]
 
     def disconnect(self):
 
@@ -60,22 +58,6 @@ class UAExchangeRatesCrawlerDB:
             result = records[0]["_id"]
 
         return result
-
-    def get_logs(self, import_date: datetime.datetime):
-
-        rows_filter = {"import_date": import_date}
-        rows_fields = {"_id": 0}
-
-        cursor = self.__LOGS_COLLECTION.find(rows_filter, rows_fields).sort(
-            "timestamp", pymongo.ASCENDING
-        )
-
-        logs = []
-
-        for log in cursor:
-            logs.append(log["text"])
-
-        return logs
 
     def insert_historical_file(
         self, file_link: str, file_hash: str, import_date: datetime.datetime
@@ -191,11 +173,6 @@ class UAExchangeRatesCrawlerDB:
 
     def insert_currency_rate(self, rate):
         self.__CURRENCY_RATES_COLLECTION.insert_one(rate)
-
-    def add_logs_entry(self, import_date, timestamp, text):
-        self.__LOGS_COLLECTION.insert_one(
-            {"import_date": import_date, "timestamp": timestamp, "text": text}
-        )
 
     def insert_import_date(self, date):
         self.__IMPORT_DATES_COLLECTION.insert_one({"date": date})
