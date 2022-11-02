@@ -10,9 +10,9 @@ Basic crawler class. Contains core functionality for a working prototype:
 - logger instance
 """
 
-from modules.db import Event
-
 import datetime
+import logging
+import logging.config
 import os
 from itertools import groupby
 from logging import Logger
@@ -22,8 +22,7 @@ import yaml
 from requests import Response
 from requests.structures import CaseInsensitiveDict
 
-import modules.logger
-from modules.db import UAExchangeRatesCrawlerDB
+from modules.db import Event, UAExchangeRatesCrawlerDB
 
 
 class UAExchangeRatesCrawler:
@@ -31,7 +30,6 @@ class UAExchangeRatesCrawler:
     _current_datetime: datetime.datetime
     _current_date: datetime.datetime
     _config: dict
-    _logger: Logger
     _db: UAExchangeRatesCrawlerDB
     _session: requests.sessions.Session = requests.session()
     _updating_event: Event
@@ -45,13 +43,31 @@ class UAExchangeRatesCrawler:
         self._config = self._get_config()
         self._db = UAExchangeRatesCrawlerDB(self._config)
 
-        self._logger = modules.logger.get_logger(
-            os.path.basename(file), self._config, self._current_datetime, self._db
-        )
+        self.setup_logging()
 
         self._updating_event = updating_event
 
-        self._logger.debug("Crawler initialized.")
+        logging.debug("Crawler initialized.")
+
+    def setup_logging(self) -> None:
+        """
+        Applies logging configuration (or basic one in case of failure).
+
+        :return: nothing
+        """
+
+        try:
+
+            logging.config.dictConfig(self._config.get("logging"))
+
+        except Exception as error:
+
+            print(error)
+            print(
+                "Error in logging configuration. Basic configuration will be applied."
+            )
+
+            logging.basicConfig(level=logging.DEBUG)
 
     @staticmethod
     def get_beginning_of_this_second() -> datetime.datetime:
@@ -75,7 +91,7 @@ class UAExchangeRatesCrawler:
 
         message = f"{title.capitalize()} started at {time} ({import_date})."
 
-        self._logger.debug(message)
+        logging.debug(message)
 
         self._db.insert_event_rates_loading(event)
 
@@ -88,13 +104,13 @@ class UAExchangeRatesCrawler:
         logs_url = self._get_logs_url(event_import_date)
 
         if logs_url != "":
-            self._logger.info(
+            logging.info(
                 '{} started at {} (<a href="{}">{}</a>) is failed.'.format(
                     event_title, event_datetime, logs_url, event_import_date
                 )
             )
         else:
-            self._logger.info(
+            logging.info(
                 "{} started at {} ({}) is failed.".format(
                     event_title, event_datetime, event_import_date
                 )
@@ -107,7 +123,7 @@ class UAExchangeRatesCrawler:
         event_import_date = self.get_import_date_as_string()
         event_description = self._description_of_rates_changed(changed_rates_number)
 
-        self._logger.info(
+        logging.info(
             f"{event_title} started at {event_datetime} is completed. {event_description}"
         )
 
@@ -115,7 +131,7 @@ class UAExchangeRatesCrawler:
 
         if logs_url != "":
 
-            self._logger.info(
+            logging.info(
                 f'Logs of the session: <a href="{logs_url}">{event_import_date}</a>'
             )
 
@@ -180,7 +196,7 @@ class UAExchangeRatesCrawler:
 
     def _process_currency_rates_to_import(self, currency_rates_to_import: list) -> int:
 
-        self._logger.debug("Process obtained rates...")
+        logging.debug("Process obtained rates...")
 
         changed_rates = []
 
@@ -195,7 +211,7 @@ class UAExchangeRatesCrawler:
             )
 
             if not self._db.rate_is_new_or_changed(currency_rate_to_import):
-                self._logger.debug(
+                logging.debug(
                     "{}: skipped (already imported)".format(rate_presentation)
                 )
                 continue
@@ -208,11 +224,11 @@ class UAExchangeRatesCrawler:
             changed_rates.append((currency_rate_on_date, currency_rate_to_import))
 
             self._db.insert_currency_rate(currency_rate_to_import)
-            self._logger.debug("{}: imported".format(rate_presentation))
+            logging.debug("{}: imported".format(rate_presentation))
 
-        self._logger.debug("Obtained rates have been processed.")
+        logging.debug("Obtained rates have been processed.")
 
-        self._logger.debug(self._description_of_rates_changed(len(changed_rates)))
+        logging.debug(self._description_of_rates_changed(len(changed_rates)))
 
         self._write_log_event_currency_rates_change_description(changed_rates)
 
@@ -245,7 +261,7 @@ class UAExchangeRatesCrawler:
 
             currencies_string = ", ".join(unknown_currencies)
 
-            self._logger.warning(
+            logging.warning(
                 "Unknown currencies have been skipped: {}".format(currencies_string)
             )
 
@@ -269,34 +285,34 @@ class UAExchangeRatesCrawler:
         success = False
         attempt = 0
 
-        self._logger.debug(f"URL to get: {request_url}")
+        logging.debug(f"URL to get: {request_url}")
 
         while not success:
 
             attempt += 1
 
             if attempt > 3:
-                self._logger.debug(
+                logging.debug(
                     "The maximum number of attempts to get a response is reached."
                 )
                 break
 
-            self._logger.debug(f"Attempt {attempt} to get a response...")
+            logging.debug(f"Attempt {attempt} to get a response...")
 
             try:
 
                 response = self._session.get(request_url, headers=headers)
 
-                self._logger.debug(f"Response status code: {response.status_code}")
+                logging.debug(f"Response status code: {response.status_code}")
 
                 if self._config.get("log_response_text"):
-                    self._logger.debug(response.text)
+                    logging.debug(response.text)
 
                 break
 
             except requests.exceptions.RequestException as exception:
 
-                self._logger.error(exception)
+                logging.error(exception)
 
         return response
 
@@ -360,9 +376,9 @@ class UAExchangeRatesCrawler:
             date_presentation = self._get_date_as_string(date)
             data_presentation = "\n".join(presentations)
 
-            self._logger.info(
+            logging.info(
                 f"Summary of changed rates"
-                f" on {date_presentation}:\n<pre>\n{data_presentation}\n</pre>"
+                f" on {date_presentation}:\n{data_presentation}"
             )
 
     @staticmethod

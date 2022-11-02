@@ -27,10 +27,48 @@ currency_codes_filter:
 #
 days_to_check: 7
 
-# Integration parameters for Telegram.
+# Logging configuration.
 #
-telegram_bot_api_token: ""
-telegram_chat_id: 0
+# Details are here (in case you need them):
+# https://docs.python.org/3/library/logging.config.html
+#
+logging:
+
+  version: 1
+
+  disable_existing_loggers: true
+
+  formatters:
+    simple:
+      format: "%(asctime)s [%(levelname)s] %(message)s"
+
+  handlers:
+
+    console:
+      class: logging.StreamHandler
+      level: DEBUG
+      formatter: simple
+      stream: ext://sys.stdout
+
+    file:
+      class: logging.handlers.RotatingFileHandler
+      level: DEBUG
+      formatter: simple
+      filename: crawler.log
+      maxBytes: 10485760
+      backupCount: 10
+      encoding: utf8
+
+  loggers:
+
+    crawler:
+      level: DEBUG
+      handlers: [console, file]
+      propagate: no
+
+  root:
+    level: DEBUG
+    handlers: [console, file]
 
 # Enable this option if you want to see text of bank's website responses
 # in log entries. Possible values: true (enable), false (disable).
@@ -46,14 +84,6 @@ log_response_text: false
 # A purpose of the feature is debugging, so you may leave it blank.
 #
 api_url: ""
-
-# A name of an API endpoint allows a user to get logs by import date.
-# Please consider making this one hard to pick up (good example
-# of the name: "logs-ueqqp7oemvsqrorx27e2").
-#
-# A purpose of the feature is debugging, so you may leave it blank.
-#
-api_endpoint_to_get_logs: ""
 
 # Lifespan of the current rates event loading in seconds. If no event
 # appears after limit is reached, heartbeat warns you.
