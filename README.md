@@ -6,6 +6,17 @@ This is a set of scripts intended to effectively crawl currency exchange rates o
 
 <!--
 
+```yaml
+    file:
+      class: logging.handlers.RotatingFileHandler
+      level: DEBUG
+      formatter: simple
+      filename: /var/log/crawler.log
+      maxBytes: 10485760
+      backupCount: 10
+      encoding: utf8
+```
+
 ## How does it work?
 
 Open [this page](https://www.centralbank.ae/en/fx-rates). There is a Javascript application which allows a user to pick a date within the current month and Excel / PDF files with historical data for previous periods (have a look at the very bottom). For instance, if today is April, the bank already published the Excel file for March for sure.
