@@ -15,7 +15,6 @@ import logging
 import logging.config
 import os
 from itertools import groupby
-from logging import Logger
 
 import requests
 import yaml
