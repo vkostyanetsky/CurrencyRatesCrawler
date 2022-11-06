@@ -13,6 +13,7 @@ class Event(enum.Enum):
     HISTORICAL_RATES_LOADING = "HISTORICAL_RATES_LOADING"
     CURRENT_RATES_UPDATING = "CURRENT_RATES_UPDATING"
     HISTORICAL_RATES_UPDATING = "HISTORICAL_RATES_UPDATING"
+    CURRENT_RATES_RECEIVING = "CURRENT_RATES_RECEIVING"
 
 
 class UAExchangeRatesCrawlerDB:
@@ -194,6 +195,23 @@ class UAExchangeRatesCrawlerDB:
                 "rate_date": rate_date,
                 "rate_initial": rate_initial,
                 "rate_current": rate_current,
+            }
+        )
+
+    def insert_event_current_rates_receiving(
+        self,
+        currency_code: str,
+        rate_date: datetime.datetime,
+        rate: str
+    ):
+
+        self.__EVENTS_COLLECTION.insert_one(
+            {
+                "event_name": Event.CURRENT_RATES_RECEIVING.value,
+                "event_date": datetime.datetime.now(),
+                "currency_code": currency_code,
+                "rate_date": rate_date,
+                "rate": rate,
             }
         )
 
