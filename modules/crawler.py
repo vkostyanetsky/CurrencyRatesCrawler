@@ -48,6 +48,27 @@ class UAExchangeRatesCrawler:
 
         logging.debug("Crawler initialized.")
 
+    def send_to_telegram_chat(self, text: str) -> None:
+
+        bot_api_token = self._config.get("telegram_bot_api_token")
+        chat_id = self._config.get("telegram_chat_id")
+
+        try:
+
+            url = f"https://api.telegram.org/bot{bot_api_token}/sendMessage"
+
+            data = {
+                "parse_mode": "HTML",
+                "chat_id": chat_id,
+                "text": text,
+            }
+
+            requests.post(url, params=data)
+
+        except Exception as error:
+            print(error)
+            print("Error while sending a message to Telegram.")
+
     def setup_logging(self) -> None:
         """
         Applies logging configuration (or basic one in case of failure).
@@ -375,10 +396,12 @@ class UAExchangeRatesCrawler:
             date_presentation = self._get_date_as_string(date)
             data_presentation = "\n".join(presentations)
 
-            logging.info(
-                f"Summary of changed rates"
-                f" on {date_presentation}:\n{data_presentation}"
-            )
+            log = f"Summary of changed rates on {date_presentation}:\n<pre>\n{data_presentation}\n</pre>"
+
+            logging.info(log)
+
+            self.send_to_telegram_chat(log)
+
 
     @staticmethod
     def date_with_time_as_string(date_with_time: datetime.datetime) -> str:

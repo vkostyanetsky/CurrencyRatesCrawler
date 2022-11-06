@@ -91,6 +91,14 @@ heartbeat_historical_rates_loading_event_lifespan: 129600
 #
 user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0"
 
+# Integration parameters for Telegram.
+#
+# Fill the fields below if you want to see a summary of imported currency rates
+# in the specified Telegram chat.
+#
+telegram_bot_api_token: ""
+telegram_chat_id: ""
+
 # Currency codes (in Arabic & English). This list is intended to convert
 # a presentation of a currency to its code, accordingly to ISO 4217.
 #
