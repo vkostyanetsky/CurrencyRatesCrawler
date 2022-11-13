@@ -81,6 +81,11 @@ api_url: ""
 #
 heartbeat_current_rates_loading_event_lifespan: 5400
 
+# Lifespan of the current rates receiving loading in seconds. If no event
+# appears after limit is reached, heartbeat warns you.
+#
+heartbeat_current_rates_receiving_event_lifespan: 43200
+
 # Lifespan of the historical rates event loading in seconds. If no event
 # appears after limit is reached, heartbeat warns you.
 #
