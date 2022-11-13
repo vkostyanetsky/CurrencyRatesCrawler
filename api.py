@@ -40,22 +40,30 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
             code=3, message=f"Unable to parse a date: {date}"
         )
 
+    @staticmethod
+    def _get_event_ttl(event: dict, event_lifespan: int) -> int:
+        return round(
+            event_lifespan
+            - (datetime.datetime.now() - event["event_date"]).total_seconds()
+        )
+
+    @staticmethod
+    def _get_event_date_as_string(event: dict) -> str:
+        return event["event_date"].strftime("%Y-%m-%dT%H:%M:%S")
+
     def _fill_current_rates_loading_heartbeat(self, heartbeat: dict):
 
         event_lifespan = self._config.get(
             "heartbeat_current_rates_loading_event_lifespan"
         )
-        last_event = self._db.get_last_event(Event.CURRENT_RATES_LOADING)
+        event = self._db.get_last_event(Event.CURRENT_RATES_LOADING)
 
-        if last_event is not None:
+        if event is not None:
 
-            last_event_ttl = round(
-                event_lifespan
-                - (datetime.datetime.now() - last_event["event_date"]).total_seconds()
-            )
-            last_event_date = last_event["event_date"].strftime("%Y-%m-%dT%H:%M:%S")
+            event_ttl = self._get_event_ttl(event, event_lifespan)
+            event_date = self._get_event_date_as_string(event)
 
-            if last_event_ttl < 0:
+            if event_ttl <= 0:
                 heartbeat["warnings"].append(
                     f"The last current rates loading triggered over {event_lifespan} seconds ago. It looks like the "
                     f"regular execution of load_current.py doesn't work."
@@ -63,56 +71,20 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
         else:
 
-            last_event_date = None
-            last_event_ttl = None
+            event_date = None
 
             heartbeat["warnings"].append(
                 "Current rates loading has never been triggered. Perhaps this is not a problem (for instance, "
                 "if the application has just been deployed so load_current.py hasn't executed once yet)."
             )
 
-        heartbeat["last_current_rates_loading_event_date"] = last_event_date
-        heartbeat["last_current_rates_loading_event_ttl"] = last_event_ttl
-
-    # def _fill_current_rates_updating_heartbeat(self, heartbeat: dict):
-    #     def get_last_weekday():
-    #         date = datetime.datetime.today()
-    #         date -= datetime.timedelta(days=1)
-    #         while date.weekday() > 4:
-    #             date -= datetime.timedelta(days=1)
-    #         return date
-    #
-    #     currencies_without_current_rates = []
-    #     currencies_with_current_rates = []
-    #
-    #     last_weekday = get_last_weekday()
-    #     currency_codes = self.get_currency_codes()
-    #
-    #     for currency_code in currency_codes:
-    #
-    #         event = self._db.get_last_event(
-    #             event=Event.CURRENT_RATES_UPDATING,
-    #             start_date=last_weekday,
-    #             end_date=datetime.datetime.now(),
-    #             currency_code=currency_code,
-    #         )
-    #         if event is not None:
-    #             currencies_with_current_rates.append(currency_code)
-    #         else:
-    #             currencies_without_current_rates.append(currency_code)
-    #
-    #     if currencies_without_current_rates:
-    #         heartbeat["warnings"].append(
-    #             f"At least one currency did not receive current rate update from {last_weekday:%Y-%m-%d}."
-    #         )
-    #
-    #     heartbeat["currencies_with_current_rates"] = currencies_with_current_rates
-    #     heartbeat["currencies_without_current_rates"] = currencies_without_current_rates
+        heartbeat["current_rates_loading_date"] = event_date
 
     def _fill_current_rates_receiving_heartbeat(self, heartbeat: dict):
 
-        currencies_without_event = []
-        currencies_with_event = []
+        availability_dates = {}
+        available_currencies = []
+        unavailable_currencies = []
 
         event_lifespan = self._config.get(
             "heartbeat_current_rates_receiving_event_lifespan"
@@ -122,48 +94,46 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
         for currency_code in currency_codes:
 
-            event = self._db.get_last_event(Event.CURRENT_RATES_RECEIVING)
+            event_ttl = 0
+            event_date = None
+
+            event = self._db.get_last_event(Event.CURRENT_RATES_AVAILABLE)
 
             if event is not None:
+                event_ttl = self._get_event_ttl(event, event_lifespan)
+                event_date = self._get_event_date_as_string(event)
 
-                event_ttl = round(
-                    event_lifespan
-                    - (datetime.datetime.now() - event["event_date"]).total_seconds()
-                )
+            availability_dates[currency_code] = event_date
 
-                if event_ttl > 0:
-                    currencies_with_event.append(currency_code)
-                else:
-                    currencies_without_event.append(currency_code)
-
+            if event_ttl > 0:
+                available_currencies.append(currency_code)
             else:
+                unavailable_currencies.append(currency_code)
 
-                currencies_without_event.append(currency_code)
-
-        if currencies_without_event:
+        if unavailable_currencies:
             heartbeat["warnings"].append(
-                f"At least one currency cannot be retrieved within {event_lifespan} seconds."
+                f"At least one currency is not available at bank's website within {event_lifespan} last seconds."
             )
 
-        heartbeat["currencies_retrieved"] = currencies_with_event
-        heartbeat["currencies_not_retrieved"] = currencies_without_event
+        heartbeat["currencies_availability"] = {
+            "availability_dates": availability_dates,
+            "available_currencies": available_currencies,
+            "unavailable_currencies": unavailable_currencies,
+        }
 
     def _fill_historical_rates_loading_heartbeat(self, heartbeat: dict):
 
         event_lifespan = self._config.get(
             "heartbeat_historical_rates_loading_event_lifespan"
         )
-        last_event = self._db.get_last_event(Event.HISTORICAL_RATES_LOADING)
+        event = self._db.get_last_event(Event.HISTORICAL_RATES_LOADING)
 
-        if last_event is not None:
+        if event is not None:
 
-            last_event_ttl = round(
-                event_lifespan
-                - (datetime.datetime.now() - last_event["event_date"]).total_seconds()
-            )
-            last_event_date = last_event["event_date"].strftime("%Y-%m-%dT%H:%M:%S")
+            event_ttl = self._get_event_ttl(event, event_lifespan)
+            event_date = self._get_event_date_as_string(event)
 
-            if last_event_ttl < 0:
+            if event_ttl < 0:
                 heartbeat["warnings"].append(
                     f"The last historical rates loading triggered over {event_lifespan} seconds ago. It looks like "
                     f"the regular execution of load_history.py doesn't work."
@@ -171,16 +141,14 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
         else:
 
-            last_event_date = None
-            last_event_ttl = None
+            event_date = None
 
             heartbeat["warnings"].append(
                 "Historical rates loading has never been triggered. Perhaps this is not a problem (for instance, "
                 "if the application has just been deployed so load_history.py hasn't executed once yet)."
             )
 
-        heartbeat["last_historical_rates_loading_event_date"] = last_event_date
-        heartbeat["last_historical_rates_loading_event_ttl"] = last_event_ttl
+        heartbeat["historical_rates_loading_date"] = event_date
 
     def get_heartbeat(self) -> tuple:
 
