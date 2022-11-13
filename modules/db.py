@@ -9,9 +9,11 @@ class Event(enum.Enum):
     """Enumeration of application's events."""
 
     NONE = "NONE"
+
     CURRENT_RATES_LOADING = "CURRENT_RATES_LOADING"
     CURRENT_RATES_UPDATING = "CURRENT_RATES_UPDATING"
-    CURRENT_RATES_AVAILABLE = "CURRENT_RATES_AVAILABLE"
+    CURRENT_RATES_AVAILABILITY = "CURRENT_RATES_AVAILABILITY"
+
     HISTORICAL_RATES_LOADING = "HISTORICAL_RATES_LOADING"
     HISTORICAL_RATES_UPDATING = "HISTORICAL_RATES_UPDATING"
 
@@ -198,13 +200,13 @@ class UAExchangeRatesCrawlerDB:
             }
         )
 
-    def insert_event_current_rates_available(
+    def insert_event_current_rates_availability(
         self, currency_code: str, rate_date: datetime.datetime, rate: str
     ):
 
         self.__EVENTS_COLLECTION.insert_one(
             {
-                "event_name": Event.CURRENT_RATES_AVAILABLE.value,
+                "event_name": Event.CURRENT_RATES_AVAILABILITY.value,
                 "event_date": datetime.datetime.now(),
                 "currency_code": currency_code,
                 "rate_date": rate_date,
