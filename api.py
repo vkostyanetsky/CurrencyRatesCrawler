@@ -80,14 +80,14 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
         heartbeat["current_rates_loading_date"] = event_date
 
-    def _fill_current_rates_receiving_heartbeat(self, heartbeat: dict):
+    def _fill_current_rates_availability_heartbeat(self, heartbeat: dict):
 
         availability_dates = {}
         available_currencies = []
         unavailable_currencies = []
 
         event_lifespan = self._config.get(
-            "heartbeat_current_rates_receiving_event_lifespan"
+            "heartbeat_current_rates_availability_event_lifespan"
         )
 
         currency_codes = self.get_currency_codes()
@@ -97,7 +97,7 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
             event_ttl = 0
             event_date = None
 
-            event = self._db.get_last_event(Event.CURRENT_RATES_AVAILABLE)
+            event = self._db.get_last_event(Event.CURRENT_RATES_AVAILABILITY)
 
             if event is not None:
                 event_ttl = self._get_event_ttl(event, event_lifespan)
@@ -157,7 +157,7 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
         self._fill_current_rates_loading_heartbeat(heartbeat)
         self._fill_historical_rates_loading_heartbeat(heartbeat)
 
-        self._fill_current_rates_receiving_heartbeat(heartbeat)
+        self._fill_current_rates_availability_heartbeat(heartbeat)
 
         logging.info("Heartbeat summary: " + str(heartbeat))
 

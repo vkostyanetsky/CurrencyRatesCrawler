@@ -106,7 +106,7 @@ class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
                 self._unknown_currencies_warning(unknown_currencies)
 
                 for exchange_rate in exchange_rates:
-                    self._db.insert_event_current_rates_available(
+                    self._db.insert_event_current_rates_availability(
                         currency_code=exchange_rate["currency_code"],
                         rate_date=exchange_rate["rate_date"],
                         rate=exchange_rate["rate"],
