@@ -402,7 +402,6 @@ class UAExchangeRatesCrawler:
 
             self.send_to_telegram_chat(log)
 
-
     @staticmethod
     def date_with_time_as_string(date_with_time: datetime.datetime) -> str:
         return date_with_time.strftime("%Y-%m-%d %H:%M:%S")
