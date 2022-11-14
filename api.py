@@ -31,6 +31,10 @@ def get_date(date_as_string):
     return datetime.datetime(year, month, day, hour, minute, second)
 
 
+def get_date_as_string(date: datetime.datetime) -> str:
+    return date.strftime("%Y-%m-%dT%H:%M:%S")
+
+
 class CrawlerHTTPService(UAExchangeRatesCrawler):
     def __init__(self, file):
         super().__init__(file, updating_event=Event.NONE)
@@ -47,10 +51,6 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
             - (datetime.datetime.now() - event["event_date"]).total_seconds()
         )
 
-    @staticmethod
-    def _get_event_date_as_string(event: dict) -> str:
-        return event["event_date"].strftime("%Y-%m-%dT%H:%M:%S")
-
     def _fill_current_rates_loading_heartbeat(self, heartbeat: dict):
 
         event_lifespan = self._config.get(
@@ -61,7 +61,7 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
         if event is not None:
 
             event_ttl = self._get_event_ttl(event, event_lifespan)
-            event_date = self._get_event_date_as_string(event)
+            event_date = get_date_as_string(event["event_date"])
 
             if event_ttl <= 0:
                 heartbeat["warnings"].append(
@@ -101,7 +101,7 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
             if event is not None:
                 event_ttl = self._get_event_ttl(event, event_lifespan)
-                event_date = self._get_event_date_as_string(event)
+                event_date = get_date_as_string(event["event_date"])
 
             availability_dates[currency_code] = event_date
 
@@ -131,7 +131,7 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
         if event is not None:
 
             event_ttl = self._get_event_ttl(event, event_lifespan)
-            event_date = self._get_event_date_as_string(event)
+            event_date = get_date_as_string(event["event_date"])
 
             if event_ttl < 0:
                 heartbeat["warnings"].append(
@@ -152,7 +152,10 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
     def get_heartbeat(self) -> tuple:
 
-        heartbeat = {"warnings": []}
+        heartbeat = {
+            "warnings": [],
+            "current_date": get_date_as_string(datetime.datetime.now())
+        }
 
         self._fill_current_rates_loading_heartbeat(heartbeat)
         self._fill_historical_rates_loading_heartbeat(heartbeat)
