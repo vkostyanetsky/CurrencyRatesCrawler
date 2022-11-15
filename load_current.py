@@ -59,7 +59,7 @@ class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
                         "currency_code": currency_code,
                         "import_date": self._current_datetime,
                         "rate_date": rate_date + datetime.timedelta(days=1),
-                        "rate": float(currency_rate),
+                          "rate": float(currency_rate),
                     }
                 )
 
