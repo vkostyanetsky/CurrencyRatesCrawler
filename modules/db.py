@@ -231,23 +231,3 @@ class UAExchangeRatesCrawlerDB:
         return self.__EVENTS_COLLECTION.find_one(
             query_filter, query_fields, sort=[("event_date", -1)]
         )
-
-    def get_last_rates_updating_event(
-        self,
-        event: Event,
-        start_date: datetime.datetime,
-        end_date: datetime.datetime,
-        currency_code: str,
-    ):
-
-        query_filter = {
-            "event_name": {"$eq": event.value},
-            "event_date": {"$gte": start_date, "$lt": end_date},
-            "currency_code": {"$eq": currency_code},
-        }
-
-        query_fields = {"_id": 0, "event_name": 0}
-
-        return self.__EVENTS_COLLECTION.find_one(
-            query_filter, query_fields, sort=[("event_date", -1)]
-        )

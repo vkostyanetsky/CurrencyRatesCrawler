@@ -161,10 +161,52 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
         self._fill_historical_rates_loading_heartbeat(heartbeat)
 
         self._fill_current_rates_availability_heartbeat(heartbeat)
+        self._fill_current_rates_updating_heartbeat(heartbeat)
 
         logging.info("Heartbeat summary: " + str(heartbeat))
 
         return heartbeat, len(heartbeat["warnings"]) == 0
+
+    def _fill_current_rates_updating_heartbeat(self, heartbeat: dict):
+
+        updating_dates = {}
+        updated_currencies = []
+        outdated_currencies = []
+
+        event_lifespan = self._config.get(
+            "heartbeat_current_rates_updating_event_lifespan"
+        )
+
+        currency_codes = self.get_currency_codes()
+
+        for currency_code in currency_codes:
+
+            event_ttl = 0
+            event_date = None
+
+            event = self._db.get_last_event(Event.CURRENT_RATES_UPDATING)
+
+            if event is not None:
+                event_ttl = self._get_event_ttl(event, event_lifespan)
+                event_date = get_date_as_string(event["event_date"])
+
+            updating_dates[currency_code] = event_date
+
+            if event_ttl > 0:
+                updated_currencies.append(currency_code)
+            else:
+                outdated_currencies.append(currency_code)
+
+        if outdated_currencies:
+            heartbeat["warnings"].append(
+                f"At least one currency is not available at bank's website within {event_lifespan} last seconds."
+            )
+
+        heartbeat["currencies_updating"] = {
+            "updating_dates": updating_dates,
+            "updated_currencies": updated_currencies,
+            "outdated_currencies": outdated_currencies,
+        }
 
     @staticmethod
     def get_error_response(code, message):
