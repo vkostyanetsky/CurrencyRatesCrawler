@@ -61,14 +61,6 @@ logging:
     level: DEBUG
     handlers: [console]
 
-# Enable this option if you want to see text of bank's website responses
-# in log entries. Possible values: true (enable), false (disable).
-#
-# A purpose of the feature is debugging, so usually you don't need
-# to enable this.
-#
-log_response_text: false
-
 # External URL of the REST service will be added to log entries
 # and messages to the Telegram chat specified in telegram_chat_id.
 #

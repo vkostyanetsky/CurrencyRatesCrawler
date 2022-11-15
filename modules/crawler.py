@@ -140,20 +140,11 @@ class UAExchangeRatesCrawler:
 
         event_title = title.capitalize()
         event_datetime = self.get_time_as_string(self._current_datetime)
-        event_import_date = self.get_import_date_as_string()
         event_description = self._description_of_rates_changed(changed_rates_number)
 
         logging.info(
             f"{event_title} started at {event_datetime} is completed. {event_description}"
         )
-
-        logs_url = self._get_logs_url(event_import_date)
-
-        if logs_url != "":
-
-            logging.info(
-                f'Logs of the session: <a href="{logs_url}">{event_import_date}</a>'
-            )
 
     def _get_config(self) -> dict:
         def get_yaml_data(yaml_filepath: str) -> dict:
@@ -325,9 +316,6 @@ class UAExchangeRatesCrawler:
 
                 logging.debug(f"Response status code: {response.status_code}")
 
-                if self._config.get("log_response_text"):
-                    logging.debug(response.text)
-
                 break
 
             except requests.exceptions.RequestException as exception:
@@ -397,8 +385,6 @@ class UAExchangeRatesCrawler:
             data_presentation = "\n".join(presentations)
 
             log = f"Summary of changed rates on {date_presentation}:\n<pre>\n{data_presentation}\n</pre>"
-
-            logging.info(log)
 
             self.send_to_telegram_chat(log)
 

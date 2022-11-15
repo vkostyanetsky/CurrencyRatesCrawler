@@ -163,8 +163,6 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
         self._fill_current_rates_availability_heartbeat(heartbeat)
         self._fill_current_rates_updating_heartbeat(heartbeat)
 
-        logging.info("Heartbeat summary: " + str(heartbeat))
-
         return heartbeat, len(heartbeat["warnings"]) == 0
 
     def _fill_current_rates_updating_heartbeat(self, heartbeat: dict):
