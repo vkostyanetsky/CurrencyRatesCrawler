@@ -34,7 +34,6 @@ class UAExchangeRatesCrawler:
     _updating_event: Event
 
     def __init__(self, file, updating_event: Event) -> None:
-
         self._current_directory = os.path.abspath(os.path.dirname(file))
         self._current_datetime = UAExchangeRatesCrawler.get_beginning_of_this_second()
         self._current_date = UAExchangeRatesCrawler._get_beginning_of_this_day()
@@ -42,7 +41,7 @@ class UAExchangeRatesCrawler:
         self._config = self._get_config()
         self._db = UAExchangeRatesCrawlerDB(self._config)
 
-        self.setup_logging()
+        self.setup_logging(file)
 
         self._updating_event = updating_event
 
@@ -69,25 +68,38 @@ class UAExchangeRatesCrawler:
             print(error)
             print("Error while sending a message to Telegram.")
 
-    def setup_logging(self) -> None:
+    def setup_logging(self, file: str) -> None:
         """
         Applies logging configuration (or basic one in case of failure).
 
         :return: nothing
         """
 
-        try:
+        current_file = os.path.split(file)[1]
 
-            logging.config.dictConfig(self._config.get("logging"))
+        if current_file == "load_current.py":
+            logging_config_name = "load_current_logging"
+        elif current_file == "load_history.py":
+            logging_config_name = "load_history_logging"
+        elif current_file == "api.py":
+            logging_config_name = "api_logging"
+        else:
+            logging_config_name = None
 
-        except Exception as error:
+        if logging_config_name is not None:
 
-            print(error)
-            print(
-                "Error in logging configuration. Basic configuration will be applied."
-            )
+            try:
 
-            logging.basicConfig(level=logging.DEBUG)
+                logging.config.dictConfig(self._config.get(logging_config_name))
+
+            except Exception as error:
+
+                print(error)
+                print(
+                    "Error in logging configuration. Basic configuration will be applied."
+                )
+
+                logging.basicConfig(level=logging.DEBUG)
 
     @staticmethod
     def get_beginning_of_this_second() -> datetime.datetime:

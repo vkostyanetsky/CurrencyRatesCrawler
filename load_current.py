@@ -18,6 +18,7 @@ from modules.db import Event
 
 
 class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
+
     def _parse_rates_text_for_date(
         self, text: str, rate_date: datetime.datetime
     ) -> tuple:

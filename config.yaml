@@ -32,22 +32,94 @@ days_to_check: 7
 # Details are here (in case you need them):
 # https://docs.python.org/3/library/logging.config.html
 #
-logging:
+load_current_logging:
 
   version: 1
 
   disable_existing_loggers: true
 
   formatters:
-    simple:
-      format: "%(asctime)s [%(levelname)s] %(message)s"
+    json:
+      format: '{"asctime": "%(asctime)s", "levelname": "%(levelname)s", "message": "%(message)s"}'
 
   handlers:
 
     console:
       class: logging.StreamHandler
       level: DEBUG
-      formatter: simple
+      formatter: json
+      stream: ext://sys.stdout
+
+    file:
+      class: logging.FileHandler
+      level: DEBUG
+      mode: w
+      formatter: json
+      filename: crawler_load_current.log
+
+  loggers:
+
+    crawler:
+      level: DEBUG
+      handlers: [console, file]
+      propagate: no
+
+  root:
+    level: DEBUG
+    handlers: [console, file]
+
+load_history_logging:
+
+  version: 1
+
+  disable_existing_loggers: true
+
+  formatters:
+    json:
+      format: '{"asctime": "%(asctime)s", "levelname": "%(levelname)s", "message": "%(message)s"}'
+
+  handlers:
+
+    console:
+      class: logging.StreamHandler
+      level: DEBUG
+      formatter: json
+      stream: ext://sys.stdout
+
+    file:
+      class: logging.FileHandler
+      level: DEBUG
+      mode: w
+      formatter: json
+      filename: crawler_load_history.log
+
+  loggers:
+
+    crawler:
+      level: DEBUG
+      handlers: [console, file]
+      propagate: no
+
+  root:
+    level: DEBUG
+    handlers: [console, file]
+
+api_logging:
+
+  version: 1
+
+  disable_existing_loggers: true
+
+  formatters:
+    json:
+      format: '%(asctime)s [%(levelname)s] %(message)s'
+
+  handlers:
+
+    console:
+      class: logging.StreamHandler
+      level: DEBUG
+      formatter: json
       stream: ext://sys.stdout
 
   loggers:
