@@ -15,7 +15,6 @@ import re
 import shutil
 import ssl
 
-import certifi
 import pandas
 import requests
 from bs4 import BeautifulSoup
@@ -68,6 +67,8 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
         return links
 
     def _load_currency_rates_from_file(self, link, currency_rates):
+
+        ssl._create_default_https_context = ssl._create_unverified_context
 
         unknown_currencies = []
 
@@ -228,7 +229,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
             try:
 
-                with requests.get(file_link, stream=True, verify=certifi.where()) as response:
+                with requests.get(file_link, stream=True) as response:
                     with open(file_path, "wb") as file:
                         shutil.copyfileobj(response.raw, file)
                         file_is_downloaded = True
