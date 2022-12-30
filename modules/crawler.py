@@ -117,15 +117,13 @@ class UAExchangeRatesCrawler:
     def get_import_date_as_string(self) -> str:
         return self._current_datetime.strftime("%Y%m%d%H%M%S")
 
-    def _import_started(self, title: str, event: Event) -> None:
+    def _import_started(self, title: str) -> None:
         time = self.get_time_as_string(self._current_datetime)
         import_date = self.get_import_date_as_string()
 
         message = f"{title.capitalize()} started at {time} ({import_date})."
 
         logging.debug(message)
-
-        self._db.insert_event_rates_loading(event)
 
     def _log_import_failed(self, title: str):
 
@@ -148,7 +146,7 @@ class UAExchangeRatesCrawler:
                 )
             )
 
-    def _log_import_completed(self, title: str, changed_rates_number: int) -> None:
+    def _log_import_completed(self, title: str, changed_rates_number: int, event: Event) -> None:
 
         event_title = title.capitalize()
         event_datetime = self.get_time_as_string(self._current_datetime)
@@ -157,6 +155,8 @@ class UAExchangeRatesCrawler:
         logging.info(
             f"{event_title} started at {event_datetime} is completed. {event_description}"
         )
+
+        self._db.insert_event_rates_loading(event)
 
     def _get_config(self) -> dict:
         def get_yaml_data(yaml_filepath: str) -> dict:

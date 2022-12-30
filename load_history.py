@@ -178,7 +178,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         log_title = "import of historical exchange rates"
 
-        self._import_started(log_title, event=Event.HISTORICAL_RATES_LOADING)
+        self._import_started(log_title)
 
         links_to_files = self._get_links_to_files()
 
@@ -199,7 +199,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
             self._db.insert_import_date(self._current_datetime)
 
             self._log_import_completed(
-                title=log_title, changed_rates_number=changed_rates_number
+                title=log_title, changed_rates_number=changed_rates_number, event=Event.HISTORICAL_RATES_LOADING
             )
 
         else:
