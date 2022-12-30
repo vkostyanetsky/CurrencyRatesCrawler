@@ -40,7 +40,7 @@ load_current_logging:
 
   formatters:
     json:
-      format: '{"asctime": "%(asctime)s", "levelname": "%(levelname)s", "message": "%(message)s"}'
+      format: '%(asctime)s [%(levelname)s] %(message)s'
 
   handlers:
 
@@ -50,23 +50,16 @@ load_current_logging:
       formatter: json
       stream: ext://sys.stdout
 
-    file:
-      class: logging.FileHandler
-      level: DEBUG
-      mode: w
-      formatter: json
-      filename: crawler_load_current.log
-
   loggers:
 
     crawler:
       level: DEBUG
-      handlers: [console, file]
+      handlers: [console]
       propagate: no
 
   root:
     level: DEBUG
-    handlers: [console, file]
+    handlers: [console]
 
 load_history_logging:
 
@@ -76,7 +69,7 @@ load_history_logging:
 
   formatters:
     json:
-      format: '{"asctime": "%(asctime)s", "levelname": "%(levelname)s", "message": "%(message)s"}'
+      format: '%(asctime)s [%(levelname)s] %(message)s'
 
   handlers:
 
@@ -86,23 +79,16 @@ load_history_logging:
       formatter: json
       stream: ext://sys.stdout
 
-    file:
-      class: logging.FileHandler
-      level: DEBUG
-      mode: w
-      formatter: json
-      filename: crawler_load_history.log
-
   loggers:
 
     crawler:
       level: DEBUG
-      handlers: [console, file]
+      handlers: [console]
       propagate: no
 
   root:
     level: DEBUG
-    handlers: [console, file]
+    handlers: [console]
 
 api_logging:
 
