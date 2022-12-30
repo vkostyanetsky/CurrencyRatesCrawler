@@ -15,6 +15,7 @@ import re
 import shutil
 import ssl
 
+import certifi
 import pandas
 import requests
 from bs4 import BeautifulSoup
@@ -227,7 +228,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
             try:
 
-                with requests.get(file_link, stream=True) as response:
+                with requests.get(file_link, stream=True, verify=certifi.where()) as response:
                     with open(file_path, "wb") as file:
                         shutil.copyfileobj(response.raw, file)
                         file_is_downloaded = True
