@@ -86,7 +86,7 @@ class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
 
         log_title = "import of current exchange rates"
 
-        self._import_started(title=log_title, event=Event.CURRENT_RATES_LOADING)
+        self._import_started(title=log_title)
 
         days_to_check = self._config.get("days_to_check")
         date_to_check = self._current_datetime.replace(hour=0, minute=0, second=0)
@@ -123,7 +123,7 @@ class CurrentUAExchangeRatesCrawler(UAExchangeRatesCrawler):
         self._db.insert_import_date(self._current_datetime)
 
         self._log_import_completed(
-            title=log_title, changed_rates_number=changed_rates_number
+            title=log_title, changed_rates_number=changed_rates_number, event=Event.CURRENT_RATES_LOADING
         )
 
         self._db.disconnect()
