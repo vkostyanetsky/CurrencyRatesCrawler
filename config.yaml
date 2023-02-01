@@ -186,7 +186,7 @@ currency_codes:
   "دولار كندي": CAD
   "فرنك سويسري": CHF
   "بيزو تشيلي": CLP
-  "يوان صيني - الخارج": CNY
+  "يوان صيني - الخارج": CNH
   "يوان صيني": CNY
   "بيزو كولومبي": COP
   "كرونة تشيكية": CZK
@@ -251,6 +251,7 @@ currency_codes:
   "منات تركمانستاني": TMT
   "سوم أوزبكستاني": UZS
   "New Zealand Dollar": NZD
+  "NewZealand Dollar": NZD
   "US Dollar": USD
   "Argentine Peso": ARS
   "Australian Dollar": AUD
@@ -263,7 +264,7 @@ currency_codes:
   "Canadian Dollar": CAD
   "Swiss Franc": CHF
   "Chilean Peso": CLP
-  "Chinese Yuan - Offshore": CNY
+  "Chinese Yuan - Offshore": CNH
   "Chinese Yuan": CNY
   "Colombian Peso": COP
   "Czech Koruna": CZK
@@ -291,7 +292,6 @@ currency_codes:
   "Malaysia Ringgit": MYR
   "Nigerian Naira": NGN
   "Norwegian Krone": NOK
-  "NewZealand Dollar": NZD
   "Omani Rial": OMR
   "Peru Sol": PEN
   "Philippine Piso": PHP

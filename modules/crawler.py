@@ -45,6 +45,8 @@ class UAExchangeRatesCrawler:
 
         self._updating_event = updating_event
 
+        self.review_currency_codes()
+
         logging.debug("Crawler initialized.")
 
     def send_to_telegram_chat(self, text: str) -> None:
@@ -276,6 +278,30 @@ class UAExchangeRatesCrawler:
     def get_currency_code(self, currency_presentation: str) -> str:
 
         return self._config["currency_codes"].get(currency_presentation)
+
+    def review_currency_codes(self) -> None:
+        """
+        Outputs information about currency codes & their presentations.
+        """
+
+        codes = {}
+
+        for currency_presentation in self._config["currency_codes"]:
+
+            currency_code = self._config["currency_codes"][currency_presentation]
+
+            if codes.get(currency_code) is None:
+                codes[currency_code] = []
+
+            codes[currency_code].append(currency_presentation)
+
+        logging.debug(f"{len(codes)} currency codes discovered:")
+
+        for code in codes:
+
+            currency_presentations = ", ".join(codes[code])
+
+            logging.debug(f"- {code} ({currency_presentations})")
 
     def _unknown_currencies_warning(self, unknown_currencies: list) -> None:
 
