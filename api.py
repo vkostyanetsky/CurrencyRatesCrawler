@@ -135,8 +135,7 @@ class CrawlerHTTPService(UAExchangeRatesCrawler):
 
             if event_ttl < 0:
                 heartbeat["warnings"].append(
-                    f"The last historical rates loading triggered over {event_lifespan} seconds ago. It looks like "
-                    f"the regular execution of load_history.py doesn't work."
+                    f"The last successful historical rates loading triggered over {event_lifespan} seconds ago."
                 )
 
         else:
