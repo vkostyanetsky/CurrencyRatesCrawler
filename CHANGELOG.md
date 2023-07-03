@@ -4,6 +4,7 @@
 
 ### Added
 
+* Fixed a bug which occurs if historical file was getting changed.
 * Support for a new bank's webservice to get currency rates.
 * Added a REST service to control how well the crawler is doing.
 

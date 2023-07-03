@@ -141,7 +141,7 @@ class HistoricalUAExchangeRatesCrawler(UAExchangeRatesCrawler):
                     "because previous file hash ({}) "
                     "is not equal to the current one.".format(
                         self.date_with_time_as_string(historical_file["import_date"]),
-                        historical_file["file_hash"],
+                        historical_file["hash"],
                     )
                 )
 
