@@ -6,6 +6,16 @@ This is a set of scripts intended to effectively crawl currency exchange rates o
 
 <!--
 
+```ad-example
+title: Current Rates
+https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrency
+```
+
+```ad-example
+title: Historical Rates (2023, 17 Feb)
+https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrencyDate?dateTime=2023-02-17
+```
+
 ```yaml
     file:
       class: logging.handlers.RotatingFileHandler
