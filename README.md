@@ -1,6 +1,6 @@
 # UAE Exchange Rates
 
-[![mypy](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/mypy.yml/badge.svg)](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/mypy.yml) [![pylint](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/pylint.yml/badge.svg)](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/pylint.yml) [![black](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/black.yml/badge.svg)](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/black.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![pylint](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/pylint.yml/badge.svg)](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/pylint.yml) [![black](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/black.yml/badge.svg)](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/black.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This is a set of scripts intended to effectively crawl currency exchange rates on the Central Bank of United Arabian Emirates, and then allow another app to get it via REST service.
 
