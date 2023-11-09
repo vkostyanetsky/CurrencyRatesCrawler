@@ -6,11 +6,11 @@ This is a set of scripts intended to effectively crawl currency exchange rates o
 
 ## 🙃 How to set up it?
 
-You can use any settings presented in [config.yaml]. All of them are commented, so it seems to me that I don't need to explain meaning of each setting key once again here.
+You can use any settings presented in [[config.yaml]]. All of them are commented, so it seems to me that I don't need to explain meaning of each setting key once again here.
 
 ## 🙃 How to start it?
 
-You have to set up periodical running for both of Python scripts, [load_current.py] and [load_history.py].  
+You have to set up periodical running for both of Python scripts, [[load_current.py]] and [[load_history.py]].  
 
 <!--
 
