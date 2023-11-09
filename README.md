@@ -10,20 +10,28 @@ All the settings presented in [config.yaml](config.yaml). They are pretty well c
 
 ## 😕 How to use it?
 
-Well, long story short: you have to set up periodical running for [load_current.py](load_current.py) and [load_history.py](load_history.py).   
+Well, long story short: 
+
+1. Setup periodical running for [load_current.py](load_current.py)
+2. Do the same for [load_history.py](load_history.py) 
+3. Start the REST service using [api.py](api.py).    
 
 More details are below.
 
-### load_current.py 
+## Current exchange rates 
 
-This script puts into the database currency rates, which are possible to crawl via the REST service of the bank. The bank used to publish actual rates approximately at 6:00 PM, so you can execute this script every evening at 8:00, for instance.
+Current rates are the rates for the short period of time back from this moment. For instance, two weeks. 
+
+The `load_current.py` script puts into the database currency rates, which are possible to crawl via the REST service of the bank. The bank used to publish actual rates approximately at 6:00 PM, so you can execute this script every evening at 8:00, for instance.
 
 For instance, [this is an example](https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrencyDate?dateTime=2023-02-17
 ) of a URL the script can crawl to get currency rates for February 17, 2023.
 
-### load_history.py
+## Historical exchange rates
 
-This script tries to find Excel files with historical currency rates on the [respective page](https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrency), then parses each one and puts the collected rates into a database.
+Historical rates are the rates that have been published on the bank website in Excel files.
+
+This script tries to find the files on the [respective page](https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrency), then parses each one and puts the collected rates into a database.
 
 You can execute the script once (for instance, if you just want all currency rates that are possible to get, not the range specified in config.yaml for load_current.py only). Otherwise, you can start this one from time to time to be sure that if the bank changes something without warning, you will see the changes in your database.
 
