@@ -4,6 +4,14 @@
 
 This is a set of scripts intended to effectively crawl currency exchange rates on the Central Bank of United Arabian Emirates, and then allow another app to get it via REST service.
 
+## 🙃 How to set up it?
+
+You can use any settings presented in [config.yaml]. All of them are commented, so it seems to me that I don't need to explain meaning of each setting key once again here.
+
+## 🙃 How to start it?
+
+You have to set up periodical running for both of Python scripts, [load_current.py] and [load_history.py].  
+
 <!--
 
 ```ad-example
