@@ -2,15 +2,15 @@
 
 [![pylint](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/pylint.yml/badge.svg)](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/pylint.yml) [![black](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/black.yml/badge.svg)](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/black.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This is a set of scripts intended to effectively crawl currency exchange rates on the Central Bank of United Arabian Emirates, and then allow another app to get it via REST service.
+In this repository, you can find a set of scripts intended to crawl currency exchange rates at the Central Bank of the United Arab Emirates. The collected rates are being written to a MongoDB database and can be retrieved via a REST interface.
 
 ## 🙃 How to set up it?
 
-You can use any settings presented in [[config.yaml]]. All of them are commented, so it seems to me that I don't need to explain meaning of each setting key once again here.
+You can use any settings presented in [config.yaml](config.yaml). All of them are commented, so it seems to me that I don't need to explain meaning of each setting key once again here.
 
 ## 🙃 How to start it?
 
-You have to set up periodical running for both of Python scripts, [[load_current.py]] and [[load_history.py]].  
+You have to set up periodical running for both of Python scripts, [load_current.py](load_current.py) and [load_history.py](load_history.py).  
 
 <!--
 
