@@ -18,7 +18,7 @@ Well, long story short:
 
 More details are below.
 
-## Current exchange rates 
+## 🌇 Current exchange rates 
 
 Current rates are the rates for the short period of time back from this moment. For instance, two weeks. 
 
@@ -27,13 +27,13 @@ The `load_current.py` script puts into the database currency rates, which are po
 For instance, [this is an example](https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrencyDate?dateTime=2023-02-17
 ) of a URL the script can crawl to get currency rates for February 17, 2023.
 
-## Historical exchange rates
+## 🌆 Historical exchange rates
 
 Historical rates are the rates that have been published on the bank website in Excel files.
 
 This script tries to find the files on the [respective page](https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrency), then parses each one and puts the collected rates into a database.
 
-You can execute the script once (for instance, if you just want all currency rates that are possible to get, not the range specified in config.yaml for load_current.py only). Otherwise, you can start this one from time to time to be sure that if the bank changes something without warning, you will see the changes in your database.
+You are supposed to start this script from time to time to be sure that if the bank changes something without warning, you will see the changes in your database. However, you can execute the script only once (for instance, if you just want to load all currency rates that are possible to get). 
 
 
 
