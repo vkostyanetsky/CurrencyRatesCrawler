@@ -2,26 +2,39 @@
 
 [![pylint](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/pylint.yml/badge.svg)](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/pylint.yml) [![black](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/black.yml/badge.svg)](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/black.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-In this repository, you can find a set of scripts intended to crawl currency exchange rates at the Central Bank of the United Arab Emirates. The collected rates are being written to a MongoDB database and can be retrieved via a REST interface.
+It is a set of scripts intended to crawl the currency exchange rates at the Central Bank of the United Arab Emirates. The collected rates are being written to a MongoDB database and can be retrieved via a REST interface.
 
-## 🙃 How to set up it?
+## 🤔 How to set it up?
 
-You can use any settings presented in [config.yaml](config.yaml). All of them are commented, so it seems to me that I don't need to explain meaning of each setting key once again here.
+All the settings presented in [config.yaml](config.yaml). They are pretty well commented, so it looks like I don't need to explain here the meaning of each setting.
 
-## 🙃 How to start it?
+## 😕 How to use it?
 
-You have to set up periodical running for both of Python scripts, [load_current.py](load_current.py) and [load_history.py](load_history.py).  
+Well, long story short: you have to set up periodical running for [load_current.py](load_current.py) and [load_history.py](load_history.py).   
+
+More details are below.
+
+### load_current.py 
+
+This script puts into the database currency rates, which are possible to crawl via the REST service of the bank. The bank used to publish actual rates approximately at 6:00 PM, so you can execute this script every evening at 8:00, for instance.
+
+For instance, [this is an example](https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrencyDate?dateTime=2023-02-17
+) of a URL the script can crawl to get currency rates for February 17, 2023.
+
+### load_history.py
+
+This script tries to find Excel files with historical currency rates on the [respective page](https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrency), then parses each one and puts the collected rates into a database.
+
+You can execute the script once (for instance, if you just want all currency rates that are possible to get, not the range specified in config.yaml for load_current.py only). Otherwise, you can start this one from time to time to be sure that if the bank changes something without warning, you will see the changes in your database.
+
+
+
+
+ 
 
 <!--
 
-```ad-example
-title: Current Rates
-https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrency
-```
 
-```ad-example
-title: Historical Rates (2023, 17 Feb)
-https://www.centralbank.ae/umbraco/Surface/Exchange/GetExchangeRateAllCurrencyDate?dateTime=2023-02-17
 ```
 
 ```yaml
