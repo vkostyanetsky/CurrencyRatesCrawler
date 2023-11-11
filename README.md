@@ -17,7 +17,7 @@ So, it is possible to get rates in two different ways:
 
 ## 🤔 How to set it up?
 
-All the settings presented in [config.yaml](config.yaml). They are pretty well commented, so it looks like I don't need to explain here the meaning of each setting.
+All the settings presented in [config.yaml](config.yaml). Almost everything in the file is pretty well commented, so it looks like I don't need to explain here the meaning of each setting.
 
 ## 😕 How to run it?
 
