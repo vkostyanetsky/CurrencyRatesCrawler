@@ -32,6 +32,17 @@ days_to_check: 7
 # Details are here (in case you need them):
 # https://docs.python.org/3/library/logging.config.html
 #
+# In addition, here is example of handler to log in a file:
+#
+#    file:
+#      class: logging.handlers.RotatingFileHandler
+#      level: DEBUG
+#      formatter: simple
+#      filename: /var/log/crawler.log
+#      maxBytes: 10485760
+#      backupCount: 10
+#      encoding: utf8
+#
 load_current_logging:
 
   version: 1

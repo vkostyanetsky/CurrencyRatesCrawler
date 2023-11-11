@@ -45,16 +45,7 @@ You are supposed to start this script from time to time to be sure that if the b
 
 ```
 
-```yaml
-    file:
-      class: logging.handlers.RotatingFileHandler
-      level: DEBUG
-      formatter: simple
-      filename: /var/log/crawler.log
-      maxBytes: 10485760
-      backupCount: 10
-      encoding: utf8
-```
+
 
 ## How does it work?
 
