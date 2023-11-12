@@ -2,7 +2,7 @@
 
 [![pylint](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/pylint.yml/badge.svg)](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/pylint.yml) [![black](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/black.yml/badge.svg)](https://github.com/vkostyanetsky/UAExchangeRates/actions/workflows/black.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-It is a set of scripts intended to crawl the currency exchange rates at the Central Bank of the United Arab Emirates. The collected rates are being written to a MongoDB database and can be retrieved via a REST interface.
+It is a set of scripts intended to crawl the currency exchange rates at the Central Bank of the United Arab Emirates. The collected rates are being written to a MongoDB database and can be retrieved via REST interface.
 
 ## 😯 How does it work?
 
@@ -12,7 +12,7 @@ Besides it, there are Excel and PDF files with historical data for previous peri
 
 So, it is possible to get rates in two different ways:
 
-1. Currency rates for this month can be received via a REST service, which lies behind the JavaScript application I mentioned above.
+1. Currency rates for this month can be received via REST service, which lies behind the JavaScript application I mentioned above.
 2. Currency rates for previous periods can be retrieved as well from published files with historical data.
 
 ## 🤔 How to set it up?
@@ -50,26 +50,6 @@ This script tries to find the files on the [respective page](https://www.central
 
 You are supposed to start this script from time to time to be sure that if the bank changes something without warning, you will see the changes in your database. However, you can execute the script only once (for instance, if you just want to load all currency rates that are possible to get). 
 
+## 📅 REST service
 
-
-
- 
-
-<!--
-
-
-```
-
-
-
-## How does it work?
-
-
-
-## How to use it?
-
-1. [Historical data loader](load_history.py) parse Excel files with historical currency rates and puts it into database. It is intended to be executed once, if you need all the exchange rates which are possible to get, not the current ones only.
-2. [Current data loader](load_current.py) puts into database currency rates which are possible to crawl via REST service of the bank. The bank used to publish actual rates approximately at 6:00 PM, so you can execute this script every evening at 8:00, for instance.
-3. [REST service](api.py) is a simple Flask app you may run via [gunicorn](https://github.com/benoitc/gunicorn), [uwsgi](https://github.com/unbit/uwsgi), or [unit](https://github.com/nginx/unit). It enables any application to get currency rates from MongoDB instance.
-
--->
+It is a simple Flask app you may run via [gunicorn](https://github.com/benoitc/gunicorn), [uwsgi](https://github.com/unbit/uwsgi), or [unit](https://github.com/nginx/unit). It enables any application to get currency rates accumulated in the MongoDB database.
